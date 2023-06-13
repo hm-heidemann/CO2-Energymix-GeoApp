@@ -129,37 +129,35 @@
             var legend = L.control({position: 'bottomright'});
 
             document.getElementById('yearSlider').addEventListener('input', function(e) {
-                var year = parseInt(e.target.value);
+                selectedYear = parseInt(e.target.value);
 
                 // Aktualisiere die Anzeige des Jahres
-                document.getElementById('yearDisplay').textContent = year;
+                document.getElementById('yearDisplay').textContent = selectedYear;
 
                 // Aktualisiere die Karte für das ausgewählte Jahr
-                updateMap(year);
+                co2EmissionsLayer.setStyle(totalCo2Style);
+                co2EmissionsLayer.eachLayer(function (layer) {
+                    onEachFeature(layer.feature, layer);
+                });
             });
+
 		
-			// Variableninitialisierung für Statistikberechnungen
             var co2Emissions = 0;
             var maxCo2 = 0;
             var minYearCo2 = Number.MAX_SAFE_INTEGER;
             var maxYearCo2 = 2021;
 
+            let selectedYear = maxYearCo2;
+
             // Konfigurierbar: Maximalwert für co2Emissions und co2EmissionsPerCapita, der für die Generierung der Choropletenkarte und Legende berücksichtigt wird
             // Damit können Extremwerte abgeschwächt werden
             var maxCo2Allowed = 0;
 
-            // Anzahl der Farbstufenklassen bzw. Werteklassen für Choropletenkarte und Legende
             var numb_classes = 10;
 
-            // Klassenbreite im Range von 0-1 abhängig von Klassenzahl
             var classwidth_between_fac = 1/numb_classes;
 
-            // Verwenden Sie festgelegte Werte für die CO2-Emissionsklassen
             var grades_arr_co2 = [0, 20e6, 50e6, 100e6, 200e6, 500e6, 1e9, 2e9, 5e9, 10e9, Number.MAX_SAFE_INTEGER];
-
-            // Initialisierung Array für CO2-Emissionen und CO2-Emissionen pro Kopf der einzelnen Länder
-            var co2EmissionsArr = [];
-	
 			
             colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length); //Farbstufenanzhal aus numb_classes
 			//colorRamp = chroma.scale('OrRd'); //alternativ: stufenlose Variante
@@ -208,8 +206,6 @@
                 legend.addTo(map);
             }
 
-
-
             // Erhalte die Farbe basierend auf den CO2-Daten
             function getCo2Color(co2Value) {
                 for (var i = 0; i < grades_arr_co2.length; i++) {
@@ -223,31 +219,23 @@
             function totalCo2Style(feature) {
                 if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
                     var year_arr = JSON.parse(feature.properties.year);
-                    var yearIndex = year_arr.indexOf(2021);
+                    var yearIndex = year_arr.indexOf(selectedYear);
                     if (yearIndex > -1) {
                         annual_co2_arr = JSON.parse(feature.properties.annual_co2);
-                        var co2DataFor2021 = annual_co2_arr[yearIndex];
-                        // console.log(feature.properties.name_de + ": " + Math.ceil(co2DataFor2021 / 1000000) + " Mio. t");
+                        var co2DataForYear = annual_co2_arr[yearIndex];
 
-                        if (co2DataFor2021 !== null) {
+                        if (co2DataForYear !== null) {
                             return {
-                                fillColor: getCo2Color(co2DataFor2021),
+                                fillColor: getCo2Color(co2DataForYear),
                                 weight: 2,
                                 opacity: 1,
                                 color: 'white',
                                 dashArray: '3',
                                 fillOpacity: 0.7
                             };
-                        } else {
-                            console.error("Fehler: Keine CO2-Daten für 2021 für das Land " + feature.properties.name_de);
                         }
-                    } else {
-                        console.error("Fehler: Keine Daten für das Jahr 2021 für das Land " + feature.properties.name_de);
                     }
-                } else {
-                    console.error("Fehler: Keine gültigen Eigenschaften für das Land " + feature.properties.name_de);
                 }
-                // Keine Füllfarbe, wenn keine geeigneten Daten vorhanden sind
                 return {
                     fillColor: "none",
                     weight: 2,
@@ -263,10 +251,10 @@
                     var year_arr = JSON.parse(feature.properties.year);
                     var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
 
-                    var yearIndex = year_arr.indexOf(2021);
+                    var yearIndex = year_arr.indexOf(selectedYear);
                     if (yearIndex > -1) {
-                        var co2DataFor2021 = annual_co2_arr[yearIndex];
-                        layer.bindPopup('<pre>CO2 Emissionen für 2021: ' + co2DataFor2021/1000000 + ' Mio. t </pre>');
+                        var co2DataForYear = annual_co2_arr[yearIndex];
+                        layer.bindPopup('<pre>CO2 Emissionen für ' + selectedYear + ': ' + co2DataForYear/1000000 + ' Mio. t </pre>');
                     } else {
                         layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
                     }
