@@ -262,10 +262,10 @@
                 };
             }
 
-            var dataMatrix = [['Jahr']];
+            var dataMatrix = [];
 
             function addCountryToChart(feature, layer) {
-                var year_arr = JSON.parse(feature.properties.year);
+                var year_arr = JSON.parse(feature.properties.year).map(Number);
                 var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
                 var countryName = feature.properties.name_de;
 
@@ -273,7 +273,7 @@
 
                 var index = 0;
                 for(var i = 1; i < dataMatrix.length; i++) {
-                    if (index < year_arr.length && dataMatrix[i][0] == year_arr[index]) {
+                    if (index < year_arr.length && dataMatrix[i][0] === year_arr[index]) {
                         dataMatrix[i].push(annual_co2_arr[index]);
                         index++;
                     } else {
@@ -286,13 +286,21 @@
 
 
             function drawChartForCountry(feature, layer) {
-                var year_arr = JSON.parse(feature.properties.year);
+                var year_arr = JSON.parse(feature.properties.year).map(Number);
                 var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
                 var countryName = feature.properties.name_de;
 
-                dataMatrix = [['Jahr', countryName]];
+                // Create initial dataMatrix with all years and null emissions
+                dataMatrix = [];
+                for (var i = minYearCo2; i <= maxYearCo2; i++) {
+                    dataMatrix.push([i, null]);
+                }
+                
+                dataMatrix.unshift(['Jahr', countryName]); // Add column headers
+
+                // Fill in actual data
                 for(var i = 0; i < year_arr.length; i++) {
-                    dataMatrix.push([year_arr[i], annual_co2_arr[i]]);
+                    dataMatrix[year_arr[i] - minYearCo2 + 1][1] = annual_co2_arr[i];
                 }
 
                 drawChart(dataMatrix);
