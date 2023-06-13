@@ -13,6 +13,8 @@
         <script src="js/jquery-3.6.4.min.js" crossorigin=""></script>
         
         <script src="js/chroma.js" crossorigin=""></script>
+
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         
         <style>
             .container {
@@ -84,6 +86,7 @@
                 <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
                 <span id="maxYearCo2">${maxYearCo2}</span>
             </div>
+            <div id="chart_div" style="width: 900px; height: 500px;"></div>
         </div>
         
     <script>
@@ -127,6 +130,8 @@
             });
 
             var legend = L.control({position: 'bottomright'});
+
+            google.charts.load('current', {'packages':['corechart']});
 
             document.getElementById('yearSlider').addEventListener('input', function(e) {
                 selectedYear = parseInt(e.target.value);
@@ -248,6 +253,17 @@
 			
             function onEachFeature(feature, layer) {
                 if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
+                    layer.on('click', function (e) {
+                        var year_arr = JSON.parse(feature.properties.year);
+                        var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
+
+                        var dataMatrix = [['Year', 'CO2 Emissionen']];
+                        for(var i = 0; i < year_arr.length; i++) {
+                            dataMatrix.push([year_arr[i], annual_co2_arr[i]]);
+                        }
+
+                        drawChart(dataMatrix);
+                    });
                     var year_arr = JSON.parse(feature.properties.year);
                     var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
 
@@ -306,6 +322,52 @@
             function getCo2ColorForLegend(proportion) {
                 return colorRamp(proportion).hex();
             }
+
+            function drawChart(dataMatrix) {
+                var data = google.visualization.arrayToDataTable(dataMatrix);
+
+                var options = {
+                    title: 'CO2 Emissionen',
+                    curveType: 'function',
+                    legend: { position: 'bottom' },
+                    hAxis: {
+                        title: 'Jahr',
+                        format: '0'
+                    },
+                    vAxis: {
+                        title: 'Emissionen',
+                        viewWindow: { min: 0 },
+                        format: 'short'
+                    }
+                };
+
+                var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+                var formatter = new google.visualization.NumberFormat({
+                    pattern: '#,##0.00',
+                    fractionDigits: 0
+                });
+            
+                formatter.format(data, 1); // Apply formatter to second column
+
+                google.visualization.events.addListener(chart, 'ready', function () {
+                    var labels = chart.getContainer().getElementsByTagName('text');
+                    Array.prototype.forEach.call(labels, function(label) {
+                        if (label.textContent.indexOf('K') > -1) {
+                            label.textContent = label.textContent.replace('K', 'Tsd');
+                        }
+                        if (label.textContent.indexOf('M') > -1) {
+                            label.textContent = label.textContent.replace('M', 'Mio');
+                        }
+                        if (label.textContent.indexOf('B') > -1) {
+                            label.textContent = label.textContent.replace('B', 'Mrd');
+                        }
+                    });
+                });
+
+                chart.draw(data, options);
+            }
+
 
 		
         
