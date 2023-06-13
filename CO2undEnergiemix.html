@@ -15,11 +15,37 @@
         <script src="js/chroma.js" crossorigin=""></script>
         
         <style>
-            #map { 
-                width: 800px; 
-                height: 500px; 
+            .container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                flex-direction: column;
+                height: 100vh; /* 100% of the viewport height */
+                max-width: 800px; /* set maximum width like the map */
+                margin: auto; /* center the container */
             }
-			 .info { 
+
+            #mapid {
+                width: 1000px;
+                height: 600px;
+            }
+            .title {
+                text-align: center;
+                font-size: 2em;
+                font-weight: bold;
+                margin-bottom: 20px;
+            }
+            .slider {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin: auto;
+                width: 100%; /* set the width to 70% */
+            }
+            .slider span {
+                margin: 0 10px;
+            }
+			.info { 
                 padding: 6px 8px; 
                 font: 14px/16px Arial, Helvetica, sans-serif; 
                 background: white; 
@@ -49,11 +75,16 @@
     
     
     <body>
-        <h1 style="color: #333">CO2-Ausstoß und Energiemix auf Länderbene</h1>
-        
-        <div id="mapid" style="width: 1000px; height: 750px;"></div>
-        
-        
+        <div class="container">
+            <h1 class="title">CO2-Ausstoß und Energiemix auf Länderbene</h1>
+            <h2 id="yearDisplay">2021</h2>
+            <div id="mapid"></div>
+            <div class="slider">
+                <span id="minYearCo2">${minYearCo2}</span>
+                <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
+                <span id="maxYearCo2">${maxYearCo2}</span>
+            </div>
+        </div>
         
     <script>
         
@@ -94,16 +125,24 @@
                 zoom: 2,
                 layers: [osmMapnik, googleStreets, osmMapnik]
             });
-			
-			
-					
+
             var legend = L.control({position: 'bottomright'});
 
-        
+            document.getElementById('yearSlider').addEventListener('input', function(e) {
+                var year = parseInt(e.target.value);
+
+                // Aktualisiere die Anzeige des Jahres
+                document.getElementById('yearDisplay').textContent = year;
+
+                // Aktualisiere die Karte für das ausgewählte Jahr
+                updateMap(year);
+            });
 		
 			// Variableninitialisierung für Statistikberechnungen
             var co2Emissions = 0;
             var maxCo2 = 0;
+            var minYearCo2 = Number.MAX_SAFE_INTEGER;
+            var maxYearCo2 = 2021;
 
             // Konfigurierbar: Maximalwert für co2Emissions und co2EmissionsPerCapita, der für die Generierung der Choropletenkarte und Legende berücksichtigt wird
             // Damit können Extremwerte abgeschwächt werden
@@ -151,13 +190,20 @@
                 co2EmissionsLayer.addData(data);
                 maxCo2 = 0;
                 for (var feature of data.features) {
-                    if (feature.properties && feature.properties.mannual_co2) {
+                    if (feature.properties && feature.properties.mannual_co2 && feature.properties.minyear) {
                         if (feature.properties.mannual_co2 > maxCo2) {
                             maxCo2 = feature.properties.mannual_co2;
                         }
+                        if (feature.properties.minyear != 0 && (feature.properties.minyear< minYearCo2)) {
+                            minYearCo2 = feature.properties.minyear;
+                        }
                     }
                 }
-                console.log(maxCo2); // Überprüfen Sie den maxCo2-Wert
+                document.getElementById('minYearCo2').textContent = minYearCo2;
+                document.getElementById('maxYearCo2').textContent = maxYearCo2;
+                document.getElementById('yearSlider').min = minYearCo2;
+                document.getElementById('yearSlider').max = maxYearCo2;
+                document.getElementById('yearSlider').value = maxYearCo2;
                 co2EmissionsLayer.setStyle(totalCo2Style);
                 legend.addTo(map);
             }
@@ -211,11 +257,6 @@
                     fillOpacity: 0.7
                 };
             }
-
-
-
-
-
 			
             function onEachFeature(feature, layer) {
                 if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
@@ -233,14 +274,10 @@
                     layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
                 }
             }
-
-			
-			
 			
 			///Methodenaufruf zur Integration des GeoJSON Layers in das L-Mapobjekt
             map.addLayer(co2EmissionsLayer);
             
-			
             // Defintion der Layer controls////////////////////////////////////
             var baseMaps = {
                 "googleSat": googleSat,
@@ -255,7 +292,6 @@
             };
 
             L.control.layers(baseMaps, overlayMaps).addTo(map);
-
 
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend');
