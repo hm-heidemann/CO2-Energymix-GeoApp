@@ -86,6 +86,9 @@
                 <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
                 <span id="maxYearCo2">${maxYearCo2}</span>
             </div>
+            <div id="controls">
+                <button id="addCountryButton">Land hinzufügen</button>
+            </div>
             <div id="chart_div" style="width: 900px; height: 500px;"></div>
         </div>
         
@@ -145,6 +148,14 @@
                     onEachFeature(layer.feature, layer);
                 });
             });
+
+            // Button-Handler
+            document.getElementById("addCountryButton").addEventListener("click", function() {
+                // Wechseln Sie in den "Land hinzufügen"-Modus
+                addCountryMode = true;
+            });
+
+            var addCountryMode = false;
 
 		
             var co2Emissions = 0;
@@ -250,19 +261,51 @@
                     fillOpacity: 0.5
                 };
             }
+
+            var dataMatrix = [['Jahr']];
+
+            function addCountryToChart(feature, layer) {
+                var year_arr = JSON.parse(feature.properties.year);
+                var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
+                var countryName = feature.properties.name_de;
+
+                dataMatrix[0].push(countryName);
+
+                var index = 0;
+                for(var i = 1; i < dataMatrix.length; i++) {
+                    if (index < year_arr.length && dataMatrix[i][0] == year_arr[index]) {
+                        dataMatrix[i].push(annual_co2_arr[index]);
+                        index++;
+                    } else {
+                        dataMatrix[i].push(null);
+                    }
+                }
+
+                drawChart(dataMatrix);
+            }
+
+
+            function drawChartForCountry(feature, layer) {
+                var year_arr = JSON.parse(feature.properties.year);
+                var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
+                var countryName = feature.properties.name_de;
+
+                dataMatrix = [['Jahr', countryName]];
+                for(var i = 0; i < year_arr.length; i++) {
+                    dataMatrix.push([year_arr[i], annual_co2_arr[i]]);
+                }
+
+                drawChart(dataMatrix);
+            }
 			
             function onEachFeature(feature, layer) {
                 if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
                     layer.on('click', function (e) {
-                        var year_arr = JSON.parse(feature.properties.year);
-                        var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
-
-                        var dataMatrix = [['Year', 'CO2 Emissionen']];
-                        for(var i = 0; i < year_arr.length; i++) {
-                            dataMatrix.push([year_arr[i], annual_co2_arr[i]]);
+                        if (addCountryMode) {
+                            addCountryToChart(feature, layer);
+                        } else {
+                            drawChartForCountry(feature, layer);
                         }
-
-                        drawChart(dataMatrix);
                     });
                     var year_arr = JSON.parse(feature.properties.year);
                     var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
@@ -343,12 +386,14 @@
 
                 var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
 
+                // Apply formatter to all data columns
                 var formatter = new google.visualization.NumberFormat({
                     pattern: '#,##0.00',
                     fractionDigits: 0
                 });
-            
-                formatter.format(data, 1); // Apply formatter to second column
+                for (var i = 1; i < data.getNumberOfColumns(); i++) {
+                    formatter.format(data, i);
+                }
 
                 google.visualization.events.addListener(chart, 'ready', function () {
                     var labels = chart.getContainer().getElementsByTagName('text');
@@ -367,8 +412,6 @@
 
                 chart.draw(data, options);
             }
-
-
 		
         
     </script>    
