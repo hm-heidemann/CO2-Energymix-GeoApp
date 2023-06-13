@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <title>CO2-Ausstoß und Energiemix auf Länderbene</title>
+
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+        
+        <link rel="stylesheet" href="css/leaflet.css"/>
+        <script src="js/leaflet.js" crossorigin=""></script>
+        <script src="js/jquery-3.6.4.min.js" crossorigin=""></script>
+        
+        <script src="js/chroma.js" crossorigin=""></script>
+        
+        <style>
+            #map { 
+                width: 800px; 
+                height: 500px; 
+            }
+			 .info { 
+                padding: 6px 8px; 
+                font: 14px/16px Arial, Helvetica, sans-serif; 
+                background: white; 
+                background: rgba(255,255,255,0.8); 
+                box-shadow: 0 0 15px rgba(0,0,0,0.2); 
+                border-radius: 5px; 
+            } 
+            .info h4 { 
+                margin: 0 0 5px; 
+                color: #777; 
+            }
+            .legend { 
+                text-align: left; 
+                line-height: 18px; 
+                color: #555; 
+            }
+            .legend i { 
+                width: 18px;
+                height: 18px; 
+                float: left; 
+                margin-right: 8px;
+                opacity: 0.7; 
+            }	
+        </style>
+        
+    </head>
+    
+    
+    <body>
+        <h1 style="color: #333">CO2-Ausstoß und Energiemix auf Länderbene</h1>
+        
+        <div id="mapid" style="width: 1000px; height: 750px;"></div>
+        
+        
+        
+    <script>
+        
+			googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: "<a href=\'http://maps.google.com/\'>Google</a> Maps Satellite",
+                noWrap: true
+            });
+
+            googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: "<a href=\'http://maps.google.com/\'>Google</a> Maps",
+                noWrap: true
+            });
+
+       
+            osmMapnik = new L.tileLayer(
+                    'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    {
+                        maxZoom: 20,
+                        attribution: 'Map data © OpenStreetMap contributors'
+                    }
+			);
+					 
+					
+			/*osmMapnikbw = new L.tileLayer(
+					'http://{s}.www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png',
+					{
+						maxZoom: 20,
+						attribution: 'Map data © OpenStreetMap contributors'
+					}
+            );*/
+        
+            var map = L.map('mapid', {
+                center: [0, 0],
+                zoom: 2,
+                layers: [osmMapnik, googleStreets, osmMapnik]
+            });
+			
+			
+					
+            var legend = L.control({position: 'bottomright'});
+
+        
+		
+			// Variableninitialisierung für Statistikberechnungen
+            var co2Emissions = 0;
+            var maxCo2 = 0;
+
+            // Konfigurierbar: Maximalwert für co2Emissions und co2EmissionsPerCapita, der für die Generierung der Choropletenkarte und Legende berücksichtigt wird
+            // Damit können Extremwerte abgeschwächt werden
+            var maxCo2Allowed = 0;
+
+            // Anzahl der Farbstufenklassen bzw. Werteklassen für Choropletenkarte und Legende
+            var numb_classes = 10;
+
+            // Klassenbreite im Range von 0-1 abhängig von Klassenzahl
+            var classwidth_between_fac = 1/numb_classes;
+
+            // Verwenden Sie festgelegte Werte für die CO2-Emissionsklassen
+            var grades_arr_co2 = [0, 20e6, 50e6, 100e6, 200e6, 500e6, 1e9, 2e9, 5e9, 10e9, Number.MAX_SAFE_INTEGER];
+
+            // Initialisierung Array für CO2-Emissionen und CO2-Emissionen pro Kopf der einzelnen Länder
+            var co2EmissionsArr = [];
+	
+			
+            colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length); //Farbstufenanzhal aus numb_classes
+			//colorRamp = chroma.scale('OrRd'); //alternativ: stufenlose Variante
+			
+            var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+            var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+            var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+            var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+
+            $.ajax({
+                url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
+                data: {
+                    version: '1.0.0',
+                    request: 'GetFeature',
+                    service: 'WFS',
+                    typeName: 'heidemann:world_co2_emissions',
+                    maxFeatures: '2000',
+                    outputFormat: 'application/json'
+                },
+                dataType: 'json',
+                jsonpCallback: 'getJson',
+                success: handleJson
+             });
+
+
+             // Behandle die JSON-Daten
+            function handleJson(data) {
+                co2EmissionsLayer.addData(data);
+                maxCo2 = 0;
+                for (var feature of data.features) {
+                    if (feature.properties && feature.properties.mannual_co2) {
+                        if (feature.properties.mannual_co2 > maxCo2) {
+                            maxCo2 = feature.properties.mannual_co2;
+                        }
+                    }
+                }
+                console.log(maxCo2); // Überprüfen Sie den maxCo2-Wert
+                co2EmissionsLayer.setStyle(totalCo2Style);
+                legend.addTo(map);
+            }
+
+
+
+            // Erhalte die Farbe basierend auf den CO2-Daten
+            function getCo2Color(co2Value) {
+                for (var i = 0; i < grades_arr_co2.length; i++) {
+                    if (co2Value <= grades_arr_co2[i]) {
+                        return colorRamp(i / (grades_arr_co2.length - 1)).hex();
+                    }
+                }
+            }
+
+
+            function totalCo2Style(feature) {
+                if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
+                    var year_arr = JSON.parse(feature.properties.year);
+                    var yearIndex = year_arr.indexOf(2021);
+                    if (yearIndex > -1) {
+                        annual_co2_arr = JSON.parse(feature.properties.annual_co2);
+                        var co2DataFor2021 = annual_co2_arr[yearIndex];
+                        // console.log(feature.properties.name_de + ": " + Math.ceil(co2DataFor2021 / 1000000) + " Mio. t");
+
+                        if (co2DataFor2021 !== null) {
+                            return {
+                                fillColor: getCo2Color(co2DataFor2021),
+                                weight: 2,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '3',
+                                fillOpacity: 0.7
+                            };
+                        } else {
+                            console.error("Fehler: Keine CO2-Daten für 2021 für das Land " + feature.properties.name_de);
+                        }
+                    } else {
+                        console.error("Fehler: Keine Daten für das Jahr 2021 für das Land " + feature.properties.name_de);
+                    }
+                } else {
+                    console.error("Fehler: Keine gültigen Eigenschaften für das Land " + feature.properties.name_de);
+                }
+                // Keine Füllfarbe, wenn keine geeigneten Daten vorhanden sind
+                return {
+                    fillColor: "none",
+                    weight: 2,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.7
+                };
+            }
+
+
+
+
+
+			
+            function onEachFeature(feature, layer) {
+                if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
+                    var year_arr = JSON.parse(feature.properties.year);
+                    var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
+
+                    var yearIndex = year_arr.indexOf(2021);
+                    if (yearIndex > -1) {
+                        var co2DataFor2021 = annual_co2_arr[yearIndex];
+                        layer.bindPopup('<pre>CO2 Emissionen für 2021: ' + co2DataFor2021/1000000 + ' Mio. t </pre>');
+                    } else {
+                        layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+                    }
+                } else {
+                    layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+                }
+            }
+
+			
+			
+			
+			///Methodenaufruf zur Integration des GeoJSON Layers in das L-Mapobjekt
+            map.addLayer(co2EmissionsLayer);
+            
+			
+            // Defintion der Layer controls////////////////////////////////////
+            var baseMaps = {
+                "googleSat": googleSat,
+                "googleStreets": googleStreets,
+				"osmMapnik": osmMapnik,  
+				// "osmMapnikbw": osmMapnikbw      
+            };
+
+            var overlayMaps = {
+                "CO2 Emissionen": co2EmissionsLayer, 
+                "CO2 Emissionen Pro Kopf" : co2EmissionsPerCapitaLayer
+            };
+
+            L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+
+            legend.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'info legend');
+
+                for (var i = 0; i < grades_arr_co2.length; i++) {
+                    var from = grades_arr_co2[i];
+                    var to = grades_arr_co2[i + 1];
+
+                    // Formatieren Sie die Werte für die Anzeige
+                    var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Gt' : from >= 1e6 ? (from / 1e6) + 'Mt' : from;
+                    var toFormatted = to >= 1e9 ? (to / 1e9) + 'Gt' : to >= 1e6 ? (to / 1e6) + 'Mt' : to;
+
+                    div.innerHTML +=
+                        '<i style="background:' + getCo2Color(from) + '"></i> ' +
+                        fromFormatted + (to ? '&ndash;' + toFormatted + '<br>' : '+');
+                }
+
+                return div;
+            };
+
+
+            function getCo2ColorForLegend(proportion) {
+                return colorRamp(proportion).hex();
+            }
+
+		
+        
+    </script>    
+   
+    </body>
+</html>
