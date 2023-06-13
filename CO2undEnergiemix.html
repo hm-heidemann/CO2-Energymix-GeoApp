@@ -237,12 +237,12 @@
                     }
                 }
                 return {
-                    fillColor: "none",
+                    fillColor: "gray",
                     weight: 2,
                     opacity: 1,
                     color: 'white',
                     dashArray: '3',
-                    fillOpacity: 0.7
+                    fillOpacity: 0.5
                 };
             }
 			
@@ -268,9 +268,9 @@
             
             // Defintion der Layer controls////////////////////////////////////
             var baseMaps = {
-                "googleSat": googleSat,
-                "googleStreets": googleStreets,
-				"osmMapnik": osmMapnik,  
+                "Google Satellit": googleSat,
+                "Google Streets": googleStreets,
+				"OSM Map": osmMapnik,  
 				// "osmMapnikbw": osmMapnikbw      
             };
 
@@ -284,7 +284,10 @@
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend');
 
-                for (var i = 0; i < grades_arr_co2.length; i++) {
+                // Beginnen Sie mit dem "Keine Daten"-Eintrag
+                div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
+
+                for (var i = 0; i < grades_arr_co2.length - 1; i++) {
                     var from = grades_arr_co2[i];
                     var to = grades_arr_co2[i + 1];
 
@@ -293,13 +296,12 @@
                     var toFormatted = to >= 1e9 ? (to / 1e9) + 'Gt' : to >= 1e6 ? (to / 1e6) + 'Mt' : to;
 
                     div.innerHTML +=
-                        '<i style="background:' + getCo2Color(from) + '"></i> ' +
-                        fromFormatted + (to ? '&ndash;' + toFormatted + '<br>' : '+');
+                        '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
+                        fromFormatted + (i < grades_arr_co2.length - 2 ? '&ndash;' + toFormatted + '<br>' : '+');
                 }
 
                 return div;
             };
-
 
             function getCo2ColorForLegend(proportion) {
                 return colorRamp(proportion).hex();
