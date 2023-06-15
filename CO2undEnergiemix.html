@@ -132,56 +132,72 @@
                 layers: [osmMapnik, googleStreets, osmMapnik]
             });
 
-            var legend = L.control({position: 'bottomright'});
-
             google.charts.load('current', {'packages':['corechart']});
 
-            document.getElementById('yearSlider').addEventListener('input', function(e) {
+            function updateYearSlider() {
+                var yearSlider = document.getElementById('yearSlider');
+                var minYearDisplay = document.getElementById('minYearCo2');
+                var maxYearDisplay = document.getElementById('maxYearCo2');
+
+                if (map.hasLayer(co2EmissionsLayer)) {
+                    yearSlider.min = minYearCo2;
+                    yearSlider.max = maxYearCo2;
+                    yearSlider.value = maxYearCo2;
+                    minYearDisplay.textContent = minYearCo2;
+                    maxYearDisplay.textContent = maxYearCo2;
+                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                    yearSlider.min = minYearCo2Pc;
+                    yearSlider.max = maxYearCo2Pc;
+                    yearSlider.value = maxYearCo2Pc;
+                    minYearDisplay.textContent = minYearCo2Pc;
+                    maxYearDisplay.textContent = maxYearCo2Pc;
+                }
+            }
+
+            yearSlider.addEventListener('input', function(e) {
                 selectedYear = parseInt(e.target.value);
 
-                // Aktualisiere die Anzeige des Jahres
                 document.getElementById('yearDisplay').textContent = selectedYear;
 
-                // Aktualisiere die Karte für das ausgewählte Jahr
-                co2EmissionsLayer.setStyle(totalCo2Style);
-                co2EmissionsLayer.eachLayer(function (layer) {
-                    onEachFeature(layer.feature, layer);
-                });
+                if (map.hasLayer(co2EmissionsLayer)) {
+                    co2EmissionsLayer.setStyle(totalCo2Style);
+                    co2EmissionsLayer.eachLayer(function (layer) {
+                        onEachFeature(layer.feature, layer);
+                    });
+                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                    co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
+                    co2EmissionsPerCapitaLayer.eachLayer(function (layer) {
+                        onEachFeaturePerCap(layer.feature, layer);
+                    });
+                }
             });
 
-            // Button-Handler
             document.getElementById("addCountryButton").addEventListener("click", function() {
-                // Wechseln Sie in den "Land hinzufügen"-Modus
-                addCountryMode = true;
+                 addCountryMode = true;
             });
 
             var addCountryMode = false;
 
-		
-            var co2Emissions = 0;
-            var maxCo2 = 0;
             var minYearCo2 = Number.MAX_SAFE_INTEGER;
             var maxYearCo2 = 2021;
+            var minYearCo2Pc = Number.MAX_SAFE_INTEGER;
+            var maxYearCo2Pc = 2021;
+
+            var co2Emissions = 0;
+            var maxCo2 = 0;
+            var maxCo2PerCap = 0;
 
             let selectedYear = maxYearCo2;
-
-            // Konfigurierbar: Maximalwert für co2Emissions und co2EmissionsPerCapita, der für die Generierung der Choropletenkarte und Legende berücksichtigt wird
-            // Damit können Extremwerte abgeschwächt werden
             var maxCo2Allowed = 0;
-
             var numb_classes = 10;
-
             var classwidth_between_fac = 1/numb_classes;
-
             var grades_arr_co2 = [0, 20e6, 50e6, 100e6, 200e6, 500e6, 1e9, 2e9, 5e9, 10e9, Number.MAX_SAFE_INTEGER];
+            var grades_arr_co2_pc = [0, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, Number.MAX_SAFE_INTEGER];
+            colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length);
+            colorRampPerCapita = chroma.scale('OrRd').classes(grades_arr_co2_pc.length);
 			
-            colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length); //Farbstufenanzhal aus numb_classes
-			//colorRamp = chroma.scale('OrRd'); //alternativ: stufenlose Variante
-			
             var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
-            var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
-            var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
-            var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+            var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeaturePerCap});
 
             $.ajax({
                 url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
@@ -195,12 +211,25 @@
                 },
                 dataType: 'json',
                 jsonpCallback: 'getJson',
-                success: handleJson
+                success: handleCo2Json
              });
 
+            $.ajax({
+                url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
+                data: {
+                    version: '1.0.0',
+                    request: 'GetFeature',
+                    service: 'WFS',
+                    typeName: 'heidemann:world_co2_emissions_pc',
+                    maxFeatures: '2000',
+                    outputFormat: 'application/json'
+                },
+                dataType: 'json',
+                jsonpCallback: 'getJson',
+                success: handleJsonPerCapita
+            });
 
-             // Behandle die JSON-Daten
-            function handleJson(data) {
+            function handleCo2Json(data) {
                 co2EmissionsLayer.addData(data);
                 maxCo2 = 0;
                 for (var feature of data.features) {
@@ -213,7 +242,7 @@
                         }
                         if (feature.properties.name_de === "Australien") {
                             var year_arr = JSON.parse(feature.properties.year);
-                            year_arr.sort(function(a, b){return a-b}); // Aufsteigende Sortierung
+                            year_arr.sort(function(a, b){return a-b});
                             feature.properties.year = JSON.stringify(year_arr);
                         }
                     }
@@ -224,10 +253,29 @@
                 document.getElementById('yearSlider').max = maxYearCo2;
                 document.getElementById('yearSlider').value = maxYearCo2;
                 co2EmissionsLayer.setStyle(totalCo2Style);
-                legend.addTo(map);
             }
 
-            // Erhalte die Farbe basierend auf den CO2-Daten
+            function handleJsonPerCapita(data) {
+                co2EmissionsPerCapitaLayer.addData(data);
+                maxCo2 = 0;
+                for (var feature of data.features) {
+                    if (feature.properties && feature.properties.mannual_co2_pc && feature.properties.minyear) {
+                        if (feature.properties.mannual_co2 > maxCo2) {
+                            maxCo2PerCap = feature.properties.mannual_co2;
+                        }
+                        if (feature.properties.minyear != 0 && (feature.properties.minyear < minYearCo2Pc)) {
+                            minYearCo2Pc = feature.properties.minyear;
+                        }
+                        if (feature.properties.name_de === "Australien") {
+                            var year_arr = JSON.parse(feature.properties.year);
+                            year_arr.sort(function(a, b) { return a - b; });
+                            feature.properties.year = JSON.stringify(year_arr);
+                        }
+                    }
+                }
+                co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
+            }
+
             function getCo2Color(co2Value) {
                 for (var i = 0; i < grades_arr_co2.length; i++) {
                     if (co2Value <= grades_arr_co2[i]) {
@@ -235,7 +283,6 @@
                     }
                 }
             }
-
 
             function totalCo2Style(feature) {
                 if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
@@ -248,6 +295,44 @@
                         if (co2DataForYear !== null) {
                             return {
                                 fillColor: getCo2Color(co2DataForYear),
+                                weight: 2,
+                                opacity: 1,
+                                color: 'white',
+                                dashArray: '3',
+                                fillOpacity: 0.7
+                            };
+                        }
+                    }
+                }
+                return {
+                    fillColor: "gray",
+                    weight: 2,
+                    opacity: 1,
+                    color: 'white',
+                    dashArray: '3',
+                    fillOpacity: 0.5
+                };
+            }
+
+            function getCo2ColorPerCapita(co2Value) {
+                for (var i = 0; i < grades_arr_co2_pc.length; i++) {
+                    if (co2Value <= grades_arr_co2_pc[i]) {
+                        return colorRampPerCapita(i / (grades_arr_co2_pc.length - 1)).hex();
+                    }
+                }
+            }
+
+            function totalCo2StylePerCapita(feature) {
+                if (feature.properties && feature.properties.year && feature.properties.annual_co2_pc) {
+                    var year_arr = JSON.parse(feature.properties.year);
+                    var yearIndex = year_arr.indexOf(selectedYear);
+                    if (yearIndex > -1) {
+                        annual_co2_arr = JSON.parse(feature.properties.annual_co2_pc);
+                        var co2DataForYear = annual_co2_arr[yearIndex];
+
+                        if (co2DataForYear !== null) {
+                            return {
+                                fillColor: getCo2ColorPerCapita(co2DataForYear),
                                 weight: 2,
                                 opacity: 1,
                                 color: 'white',
@@ -294,15 +379,13 @@
                 var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
                 var countryName = feature.properties.name_de;
 
-                // Create initial dataMatrix with all years and null emissions
                 dataMatrix = [];
                 for (var i = minYearCo2; i <= maxYearCo2; i++) {
                     dataMatrix.push([i, null]);
                 }
                 
-                dataMatrix.unshift(['Jahr', countryName]); // Add column headers
+                dataMatrix.unshift(['Jahr', countryName]);
 
-                // Fill in actual data
                 for(var i = 0; i < year_arr.length; i++) {
                     dataMatrix[year_arr[i] - minYearCo2 + 1][1] = annual_co2_arr[i];
                 }
@@ -333,11 +416,34 @@
                     layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
                 }
             }
+
+            function onEachFeaturePerCap(feature, layer) {
+                if (feature.properties && feature.properties.year && feature.properties.annual_co2_pc) {
+                    /*layer.on('click', function (e) {
+                        if (addCountryMode) {
+                            addCountryToChart(feature, layer);
+                        } else {
+                            drawChartForCountry(feature, layer);
+                        }
+                    });*/
+
+                    var year_arr = JSON.parse(feature.properties.year);
+                    var annual_co2_pc_arr = JSON.parse(feature.properties.annual_co2_pc);
+
+                    var yearIndex = year_arr.indexOf(selectedYear);
+                    if (yearIndex > -1) {
+                        var co2DataForYear = annual_co2_pc_arr[yearIndex];
+                        layer.bindPopup('<pre>CO2 Emissionen pro Kopf für ' + selectedYear + ': ' + co2DataForYear + ' t </pre>');
+                    } else {
+                        layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+                    }
+                } else {
+                    layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+                }
+            }
 			
-			///Methodenaufruf zur Integration des GeoJSON Layers in das L-Mapobjekt
             map.addLayer(co2EmissionsLayer);
             
-            // Defintion der Layer controls////////////////////////////////////
             var baseMaps = {
                 "Google Satellit": googleSat,
                 "Google Streets": googleStreets,
@@ -352,31 +458,55 @@
 
             L.control.layers(baseMaps, overlayMaps).addTo(map);
 
+            var legend = L.control({position: 'bottomright'});
+
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend');
-
-                // Beginnen Sie mit dem "Keine Daten"-Eintrag
-                div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
-
-                for (var i = 0; i < grades_arr_co2.length - 1; i++) {
-                    var from = grades_arr_co2[i];
-                    var to = grades_arr_co2[i + 1];
-
-                    // Formatieren Sie die Werte für die Anzeige
-                    var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Gt' : from >= 1e6 ? (from / 1e6) + 'Mt' : from;
-                    var toFormatted = to >= 1e9 ? (to / 1e9) + 'Gt' : to >= 1e6 ? (to / 1e6) + 'Mt' : to;
-
-                    div.innerHTML +=
-                        '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
-                        fromFormatted + (i < grades_arr_co2.length - 2 ? '&ndash;' + toFormatted + '<br>' : '+');
-                }
-
                 return div;
             };
 
-            function getCo2ColorForLegend(proportion) {
-                return colorRamp(proportion).hex();
+            legend.addTo(map);
+
+            function updateLegend() {
+                var div = legend.getContainer();
+                div.innerHTML = '';
+                
+                if (map.hasLayer(co2EmissionsLayer)) {
+                    div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
+                    for (var i = 0; i < grades_arr_co2.length - 1; i++) {
+                        var from = grades_arr_co2[i];
+                        var to = grades_arr_co2[i + 1];
+
+                        var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Mrd. t' : from >= 1e6 ? (from / 1e6) + 'Mio. t' : from;
+                        var toFormatted = to >= 1e9 ? (to / 1e9) + 'Mrd. t' : to >= 1e6 ? (to / 1e6) + 'Mio. t' : to;
+
+                        div.innerHTML +=
+                            '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
+                            fromFormatted + (i < grades_arr_co2.length - 2 ? ' &ndash; ' + toFormatted + '<br>' : '+');
+                    }
+                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                    div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
+                    for (var i = 0; i < grades_arr_co2_pc.length - 1; i++) {
+                        var from = grades_arr_co2_pc[i];
+                        var to = grades_arr_co2_pc[i + 1];
+
+                        div.innerHTML +=
+                            '<i style="background:' + getCo2ColorPerCapita(from + 1) + '"t></i> ' +
+                            from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : '+');
+                    }
+                }
             }
+
+            map.on('overlayadd', function(e) {
+                updateYearSlider();
+                updateLegend();
+            });
+            map.on('overlayremove', function(e) {
+                updateYearSlider();
+                updateLegend();
+            });
+
+            updateLegend();
 
             function drawChart(dataMatrix) {
                 var data = google.visualization.arrayToDataTable(dataMatrix);
@@ -398,7 +528,6 @@
 
                 var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
 
-                // Apply formatter to all data columns
                 var formatter = new google.visualization.NumberFormat({
                     pattern: '#,##0.00',
                     fractionDigits: 0
