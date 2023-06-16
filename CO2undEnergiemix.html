@@ -15,38 +15,48 @@
         <script src="js/chroma.js" crossorigin=""></script>
 
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
         
         <style>
+            .title-and-tabs {
+                text-align: center;
+            }
+
+            .tabs {
+                font-size: 21px;
+            }
+
             .container {
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 flex-direction: column;
-                height: 100vh; /* 100% of the viewport height */
-                max-width: 800px; /* set maximum width like the map */
-                margin: auto; /* center the container */
+                height: 100%;
+                max-width: 100%;
+                margin: auto; 
             }
 
-            #mapid {
-                width: 1000px;
-                height: 600px;
+            .map {
+                width: 65%;
+                height: 70vh; 
+                margin: auto; 
             }
-            .title {
-                text-align: center;
-                font-size: 2em;
-                font-weight: bold;
-                margin-bottom: 20px;
-            }
+
+
             .slider {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 margin: auto;
-                width: 100%; /* set the width to 70% */
+                width: 70%;
             }
+
             .slider span {
                 margin: 0 10px;
             }
+
 			.info { 
                 padding: 6px 8px; 
                 font: 14px/16px Arial, Helvetica, sans-serif; 
@@ -55,15 +65,18 @@
                 box-shadow: 0 0 15px rgba(0,0,0,0.2); 
                 border-radius: 5px; 
             } 
+
             .info h4 { 
                 margin: 0 0 5px; 
                 color: #777; 
             }
+
             .legend { 
                 text-align: left; 
                 line-height: 18px; 
                 color: #555; 
             }
+
             .legend i { 
                 width: 18px;
                 height: 18px; 
@@ -77,10 +90,27 @@
     
     
     <body>
-        <div class="container">
-            <h1 class="title">CO2-Ausstoß und Energiemix auf Länderbene</h1>
+        <div class="bg-light">
+            <div class="title-and-tabs nav-link">
+                <h1 style="font-size: 31px;">CO2-Ausstoß und Energiemix auf Länderbene</h1>
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link tabs" id="co2Nav" href="#">CO2-Ausstoß</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link tabs" id="energiemixNav" href="#">Energiemix</a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <div class="container"> 
             <h2 id="yearDisplay">2021</h2>
-            <div id="mapid"></div>
+            <div class="map" id="co2Map"></div>
+            <div class="map" id="energyMap" style="display:none;"></div>
             <div class="slider">
                 <span id="minYearCo2">${minYearCo2}</span>
                 <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
@@ -116,21 +146,30 @@
                         attribution: 'Map data © OpenStreetMap contributors'
                     }
 			);
-					 
-					
-			/*osmMapnikbw = new L.tileLayer(
-					'http://{s}.www.toolserver.org/tiles/bw-mapnik/{z}/{x}/{y}.png',
-					{
-						maxZoom: 20,
-						attribution: 'Map data © OpenStreetMap contributors'
-					}
-            );*/
         
-            var map = L.map('mapid', {
-                center: [0, 0],
+            var co2Map = L.map('co2Map', {
+                center: [30, 0],
                 zoom: 2,
                 layers: [osmMapnik, googleStreets, osmMapnik]
             });
+
+
+            var energyMap = L.map('energyMap', {
+                center: [30, 0],
+                zoom: 2,
+                layers: [osmMapnik, googleStreets, osmMapnik]
+            });
+
+            document.getElementById('co2Nav').addEventListener('click', function() {
+                document.getElementById('co2Map').style.display = 'block';
+                document.getElementById('energyMap').style.display = 'none';
+            });
+
+            document.getElementById('energiemixNav').addEventListener('click', function() {
+                document.getElementById('co2Map').style.display = 'none';
+                document.getElementById('energyMap').style.display = 'block';
+            });
+
 
             google.charts.load('current', {'packages':['corechart']});
 
@@ -139,13 +178,13 @@
                 var minYearDisplay = document.getElementById('minYearCo2');
                 var maxYearDisplay = document.getElementById('maxYearCo2');
 
-                if (map.hasLayer(co2EmissionsLayer)) {
+                if (co2Map.hasLayer(co2EmissionsLayer)) {
                     yearSlider.min = minYearCo2;
                     yearSlider.max = maxYearCo2;
                     yearSlider.value = maxYearCo2;
                     minYearDisplay.textContent = minYearCo2;
                     maxYearDisplay.textContent = maxYearCo2;
-                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                } else if (co2Map.hasLayer(co2EmissionsPerCapitaLayer)) {
                     yearSlider.min = minYearCo2Pc;
                     yearSlider.max = maxYearCo2Pc;
                     yearSlider.value = maxYearCo2Pc;
@@ -159,12 +198,12 @@
 
                 document.getElementById('yearDisplay').textContent = selectedYear;
 
-                if (map.hasLayer(co2EmissionsLayer)) {
+                if (co2Map.hasLayer(co2EmissionsLayer)) {
                     co2EmissionsLayer.setStyle(totalCo2Style);
                     co2EmissionsLayer.eachLayer(function (layer) {
                         onEachFeature(layer.feature, layer);
                     });
-                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                } else if (co2Map.hasLayer(co2EmissionsPerCapitaLayer)) {
                     co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
                     co2EmissionsPerCapitaLayer.eachLayer(function (layer) {
                         onEachFeaturePerCap(layer.feature, layer);
@@ -359,9 +398,9 @@
                 var countryName = feature.properties.name_de;
 
                 var co2_arr;
-                if (map.hasLayer(co2EmissionsLayer)) {
+                if (co2Map.hasLayer(co2EmissionsLayer)) {
                     co2_arr = JSON.parse(feature.properties.annual_co2);
-                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                } else if (co2Map.hasLayer(co2EmissionsPerCapitaLayer)) {
                     co2_arr = JSON.parse(feature.properties.annual_co2_pc);
                 }
 
@@ -385,9 +424,9 @@
                 var countryName = feature.properties.name_de;
 
                 var co2_arr;
-                if (map.hasLayer(co2EmissionsLayer)) {
+                if (co2Map.hasLayer(co2EmissionsLayer)) {
                     co2_arr = JSON.parse(feature.properties.annual_co2);
-                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                } else if (co2Map.hasLayer(co2EmissionsPerCapitaLayer)) {
                     co2_arr = JSON.parse(feature.properties.annual_co2_pc);
                 }
 
@@ -454,13 +493,12 @@
                 }
             }
 			
-            map.addLayer(co2EmissionsLayer);
+            co2Map.addLayer(co2EmissionsLayer);
             
             var baseMaps = {
                 "Google Satellit": googleSat,
                 "Google Streets": googleStreets,
-				"OSM Map": osmMapnik,  
-				// "osmMapnikbw": osmMapnikbw      
+				"OSM Map": osmMapnik,      
             };
 
             var overlayMaps = {
@@ -468,7 +506,8 @@
                 "CO2 Emissionen Pro Kopf" : co2EmissionsPerCapitaLayer
             };
 
-            L.control.layers(baseMaps, overlayMaps).addTo(map);
+            L.control.layers(baseMaps, overlayMaps).addTo(co2Map);
+            L.control.layers(baseMaps).addTo(energyMap);
 
             var legend = L.control({position: 'bottomright'});
 
@@ -477,13 +516,13 @@
                 return div;
             };
 
-            legend.addTo(map);
+            legend.addTo(co2Map);
 
             function updateLegend() {
                 var div = legend.getContainer();
                 div.innerHTML = '';
                 
-                if (map.hasLayer(co2EmissionsLayer)) {
+                if (co2Map.hasLayer(co2EmissionsLayer)) {
                     div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
                     for (var i = 0; i < grades_arr_co2.length - 1; i++) {
                         var from = grades_arr_co2[i];
@@ -496,7 +535,7 @@
                             '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
                             fromFormatted + (i < grades_arr_co2.length - 2 ? ' &ndash; ' + toFormatted + '<br>' : '+');
                     }
-                } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+                } else if (co2Map.hasLayer(co2EmissionsPerCapitaLayer)) {
                     div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
                     for (var i = 0; i < grades_arr_co2_pc.length - 1; i++) {
                         var from = grades_arr_co2_pc[i];
@@ -509,13 +548,13 @@
                 }
             }
 
-            map.on('overlayadd', function(e) {
+            co2Map.on('overlayadd', function(e) {
                 updateYearSlider();
                 updateLegend();
                 dataMatrix = [['Jahr']];
                 drawChart(dataMatrix);
             });
-            map.on('overlayremove', function(e) {
+            co2Map.on('overlayremove', function(e) {
                 updateYearSlider();
                 updateLegend();
                 dataMatrix = [['Jahr']];
