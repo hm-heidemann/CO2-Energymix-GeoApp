@@ -135,11 +135,6 @@ function handleCo2Json(data) {
             if (feature.properties.minyear != 0 && (feature.properties.minyear< minYearCo2)) {
                 minYearCo2 = feature.properties.minyear;
             }
-            if (feature.properties.name_de === "Australien") {
-                var year_arr = JSON.parse(feature.properties.year);
-                year_arr.sort(function(a, b){return a-b});
-                feature.properties.year = JSON.stringify(year_arr);
-            }
         }
     }
     document.getElementById('minYearCo2').textContent = minYearCo2;
@@ -160,11 +155,6 @@ function handleJsonPerCapita(data) {
             }
             if (feature.properties.minyear != 0 && (feature.properties.minyear < minYearCo2Pc)) {
                 minYearCo2Pc = feature.properties.minyear;
-            }
-            if (feature.properties.name_de === "Australien") {
-                var year_arr = JSON.parse(feature.properties.year);
-                year_arr.sort(function(a, b) { return a - b; });
-                feature.properties.year = JSON.stringify(year_arr);
             }
         }
     }
