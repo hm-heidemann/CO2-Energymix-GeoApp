@@ -15,7 +15,17 @@ var colors = {
     'Wind': '#ADD8E6'
 }; 
 
-var energyLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
+var energyLayer = new L.GeoJSON(null, {
+    style: function(feature) {
+        return {
+            fillColor: 'transparent',
+            color: '#000',
+            weight: 2,
+            opacity: 1, 
+        };
+    },
+    onEachFeature: onEachFeature
+});
 
 googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
     maxZoom: 20,
