@@ -299,6 +299,7 @@ function onEachFeature(feature, layer) {
                 drawChartForCountry(feature, layer);
             }
         });
+
         var year_arr = JSON.parse(feature.properties.year);
         var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
 
@@ -397,13 +398,17 @@ map.on('overlayadd', function(e) {
     updateYearSlider();
     updateLegend();
     dataMatrix = [['Jahr']];
-    drawChart(dataMatrix);
+    if(dataMatrix[0].length > 1) {
+        drawChart(dataMatrix);
+    }    
 });
 map.on('overlayremove', function(e) {
     updateYearSlider();
     updateLegend();
     dataMatrix = [['Jahr']];
-    drawChart(dataMatrix);
+    if(dataMatrix[0].length > 1) {
+        drawChart(dataMatrix);
+    }
 });
 
 updateLegend();
