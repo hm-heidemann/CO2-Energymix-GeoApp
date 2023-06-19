@@ -69,42 +69,45 @@ $.ajax({
     dataType: 'json',
     jsonpCallback: 'getJson',
     success: handleEnergyJson
-    });
+});
 
-    function handleEnergyJson(data) {
-        energyLayer.addData(data);
-        for (var feature of data.features) {
-            minyear_c = feature.properties.minyear_c;
-            if (minyear_c !== null &&  minyear_c < minYearEnergy) {
-                minYearEnergy = minyear_c;
-            }
-            if (feature.properties.maxyear_c > maxYearEnergy) {
-                maxYearEnergy = feature.properties.maxyear_c;
-            }
+function handleEnergyJson(data) {
+    console.log(data);
+    energyLayer.addData(data);
+    for (var feature of data.features) {
+        minyear_c = feature.properties.minyear_c;
+        if (minyear_c !== null &&  minyear_c < minYearEnergy) {
+            minYearEnergy = minyear_c;
         }
+        if (feature.properties.maxyear_c > maxYearEnergy) {
+            maxYearEnergy = feature.properties.maxyear_c;
+        }
+    }
+
+    var yearPicker = document.getElementById('yearPicker');
     
-        var yearPicker = document.getElementById('yearPicker');
+    for (var i = minYearEnergy; i <= maxYearEnergy; i++) {
+        var option = document.createElement('option');
+        option.value = i;
+        option.text = i;
+        yearPicker.appendChild(option);
+    }
+    
+    yearPicker.value = selectedYear;
+    
+    yearPicker.addEventListener('change', function(e) {
+        selectedYear = parseInt(e.target.value);
         
-        for (var i = minYearEnergy; i <= maxYearEnergy; i++) {
-            var option = document.createElement('option');
-            option.value = i;
-            option.text = i;
-            yearPicker.appendChild(option);
-        }
-        
-        yearPicker.value = selectedYear;
-        
-        yearPicker.addEventListener('change', function(e) {
-            selectedYear = parseInt(e.target.value);
-            
-            energyLayer.eachLayer(function (layer) {
-                onEachFeature(layer.feature, layer);
-            });
+        energyLayer.eachLayer(function (layer) {
+            onEachFeature(layer.feature, layer);
         });
-    }    
+    });
+}    
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
+    var center_lon = feature.properties.center_lon;
+    var center_lat = feature.properties.center_lat;
 
     var year_c = feature.properties.year_c ? JSON.parse(feature.properties.year_c) : null;
     var year_g = feature.properties.year_g ? JSON.parse(feature.properties.year_g) : null;
@@ -179,7 +182,7 @@ function onEachFeature(feature, layer) {
             colors: bgColors
         };
 
-        var center = layer.getBounds().getCenter();
+        var center = {'lat': center_lat, 'lon': center_lon};
         var pieChart = L.minichart(center, pieOptions);
         map.addLayer(pieChart); 
     }
