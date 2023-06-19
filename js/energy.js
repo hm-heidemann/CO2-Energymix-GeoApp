@@ -72,7 +72,6 @@ $.ajax({
 });
 
 function handleEnergyJson(data) {
-    console.log(data);
     energyLayer.addData(data);
     for (var feature of data.features) {
         minyear_c = feature.properties.minyear_c;
@@ -103,6 +102,18 @@ function handleEnergyJson(data) {
         });
     });
 }    
+
+function getDiameter(area) {
+    var scaleFactor = 0.00002;
+    var minDiameter = 35; 
+    var maxDiameter = 50; 
+    
+    var diameter = Math.sqrt(area) * scaleFactor;
+    diameter = Math.max(diameter, minDiameter);
+    diameter = Math.min(diameter, maxDiameter);
+    
+    return diameter;
+} 
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
@@ -175,13 +186,16 @@ function onEachFeature(feature, layer) {
     }
 
     if (data.length > 0) {    
+        var area = turf.area(layer.feature);
+        var diameter = getDiameter(area);
+        console.log(diameter);
         var pieOptions = {
             type: 'pie',
-            width: 40, height: 40,
+            width: diameter, height: diameter,
             data: data.map(val => parseFloat(val.toFixed(2))),
             colors: bgColors
-        };
-
+        };   
+              
         var center = {'lat': center_lat, 'lon': center_lon};
         var pieChart = L.minichart(center, pieOptions);
         map.addLayer(pieChart); 
