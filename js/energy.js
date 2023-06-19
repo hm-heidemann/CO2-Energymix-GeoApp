@@ -3,7 +3,17 @@ var maxYearEnergy = 0;
 
 var maxCo2 = 0;
 
-let selectedYear = maxYearEnergy;
+var selectedYear = 2021;
+
+var colors = {
+    'Kohle': '#8B4513',
+    'Gas': '#808080',
+    'Öl': '#000000',
+    'Nuklear': '#FF0000',
+    'Hydro': '#0000FF',
+    'Solar': '#FFFF00',
+    'Wind': '#ADD8E6'
+}; 
 
 var energyLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
 
@@ -96,38 +106,92 @@ function handleEnergyJson(data) {
 }
 
 function onEachFeature(feature, layer) {
-    var coalIndex = feature.properties.year_c ? feature.properties.year_c.indexOf(selectedYear) : -1;
-    var gasIndex = feature.properties.year_g ? feature.properties.year_g.indexOf(selectedYear) : -1;
-    var oilIndex = feature.properties.year_o ? feature.properties.year_o.indexOf(selectedYear) : -1;
-    var nuclearIndex = feature.properties.year_n ? feature.properties.year_n.indexOf(selectedYear) : -1;
-    var hydroIndex = feature.properties.year_h ? feature.properties.year_h.indexOf(selectedYear) : -1;
-    var solarIndex = feature.properties.year_s ? feature.properties.year_s.indexOf(selectedYear) : -1;
-    var windIndex = feature.properties.year_w ? feature.properties.year_w.indexOf(selectedYear) : -1;
+    var name = feature.properties.name_de;
 
-    if (feature.properties && feature.properties.coal && coalIndex >= 0 && gasIndex >= 0 && oilIndex >= 0 && nuclearIndex >= 0 && hydroIndex >= 0 && solarIndex >= 0 && windIndex >= 0) {    
+    var year_c = feature.properties.year_c ? JSON.parse(feature.properties.year_c) : null;
+    var year_g = feature.properties.year_g ? JSON.parse(feature.properties.year_g) : null;
+    var year_o = feature.properties.year_o ? JSON.parse(feature.properties.year_o) : null;
+    var year_n = feature.properties.year_n ? JSON.parse(feature.properties.year_n) : null;
+    var year_h = feature.properties.year_h ? JSON.parse(feature.properties.year_h) : null;
+    var year_s = feature.properties.year_s ? JSON.parse(feature.properties.year_s) : null;
+    var year_w = feature.properties.year_w ? JSON.parse(feature.properties.year_w) : null;
+
+    var coal = feature.properties.coal ? JSON.parse(feature.properties.coal) : null;
+    var gas = feature.properties.gas ? JSON.parse(feature.properties.gas) : null;
+    var oil = feature.properties.oil ? JSON.parse(feature.properties.oil) : null;
+    var nuclear = feature.properties.nuclear ? JSON.parse(feature.properties.nuclear) : null;
+    var hydro = feature.properties.hydro ? JSON.parse(feature.properties.hydro) : null;
+    var solar = feature.properties.solar ? JSON.parse(feature.properties.solar) : null;
+    var wind = feature.properties.wind ? JSON.parse(feature.properties.wind) : null;
+
+    var coalIndex = year_c ? year_c.indexOf(selectedYear) : -1;
+    var gasIndex = year_g ? year_g.indexOf(selectedYear) : -1;
+    var oilIndex = year_o ? year_o.indexOf(selectedYear) : -1;
+    var nuclearIndex = year_n ? year_n.indexOf(selectedYear) : -1;
+    var hydroIndex = year_h ? year_h.indexOf(selectedYear) : -1;
+    var solarIndex = year_s ? year_s.indexOf(selectedYear) : -1;
+    var windIndex = year_w ? year_w.indexOf(selectedYear) : -1;
+
+    var data = [];
+    var labels = [];
+    
+    var bgColors = [];
+
+    if (coalIndex >= 0 && coal[coalIndex]) {
+        data.push(coal[coalIndex]);
+        labels.push('Kohle');
+        bgColors.push(colors['Kohle']);
+    }
+    if (gasIndex >= 0 && gas[gasIndex]) {
+        data.push(gas[gasIndex]);
+        labels.push('Gas');
+        bgColors.push(colors['Gas']);
+    }
+    if (oilIndex >= 0 && oil[oilIndex]) {
+        data.push(oil[oilIndex]);
+        labels.push('Öl');
+        bgColors.push(colors['Öl']);
+    }
+    if (nuclearIndex >= 0 && nuclear[nuclearIndex]) {
+        data.push(nuclear[nuclearIndex]);
+        labels.push('Nuklear');
+        bgColors.push(colors['Nuklear']);
+    }
+    if (hydroIndex >= 0 && hydro[hydroIndex]) {
+        data.push(hydro[hydroIndex]);
+        labels.push('Hydro');
+        bgColors.push(colors['Hydro']);
+    }
+    if (solarIndex >= 0 && solar[solarIndex]) {
+        data.push(solar[solarIndex]);
+        labels.push('Solar');
+        bgColors.push(colors['Solar']);
+    }
+    if (windIndex >= 0 && wind[windIndex]) {
+        data.push(wind[windIndex]);
+        labels.push('Wind');
+        bgColors.push(colors['Wind']);
+    }
+
+    if (data.length > 0) {    
         var pieOptions = {
             type: 'pie',
             width: 40, height: 40,
-            data: [
-                feature.properties.coal[coalIndex], 
-                feature.properties.gas[gasIndex], 
-                feature.properties.oil[oilIndex], 
-                feature.properties.nuclear[nuclearIndex], 
-                feature.properties.hydro[hydroIndex], 
-                feature.properties.solar[solarIndex], 
-                feature.properties.wind[windIndex]
-            ],
-            labels: ['coal', 'gas', 'oil', 'nuclear', 'hydro', 'solar', 'wind'],
-            backgroundColor: ['#000000', '#808080', '#FFD700', '#800000', '#0000FF', '#FFA500', '#008000'],
-            hoverBackgroundColor: ['#000000', '#808080', '#FFD700', '#800000', '#0000FF', '#FFA500', '#008000']
+            data: data.map(val => parseFloat(val.toFixed(2))),
+            colors: bgColors
         };
 
         var center = layer.getBounds().getCenter();
         var pieChart = L.minichart(center, pieOptions);
         map.addLayer(pieChart); 
     }
-}
 
+    var popupContent = `
+        <strong>${name}</strong><br/>
+        ${labels.map((label, index) => `${label}: ${parseFloat(data[index].toFixed(2))}%`).join('<br/>')}
+    `;
+    layer.bindPopup(popupContent);
+}
 
 
 map.addLayer(energyLayer);
