@@ -4,7 +4,7 @@ var maxYearEnergy = 0;
 var maxCo2 = 0;
 
 var selectedYear = 2021;
-
+var labels = ['Kohle', 'Gas', 'Öl', 'Nuklear', 'Hydro', 'Solar', 'Wind'];
 var colors = {
     'Kohle': '#8B4513',
     'Gas': '#808080',
@@ -212,6 +212,12 @@ var legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend');
+    labels.forEach((label) => {
+        div.innerHTML += 
+        '<i style="background:' + colors[label] + '"></i> ' +
+        (label ? label + '<br>' : '+');
+    });
+
     return div;
 };
 
