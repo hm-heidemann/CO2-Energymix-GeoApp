@@ -18,6 +18,11 @@
 
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" media="screen" title="leaflet">
+        <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js" charset="utf-8"></script>
+        <script src="https://unpkg.com/leaflet.minichart/dist/leaflet.minichart.min.js" charset="utf-8"></script>
+
         <link rel="stylesheet" href="style.css">
         
     </head>
@@ -43,17 +48,12 @@
         </div>
         <div class="container"> 
             <h2 id="yearDisplay">2021</h2>
-            <div class="map" id="co2Map"></div>
-            <div class="map" id="energyMap" style="display:none;"></div>
+            <div class="map" id="mapid"></div>
             <div class="slider">
-                <span id="minYearCo2">${minYearCo2}</span>
-                <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
-                <span id="maxYearCo2">${maxYearCo2}</span>
+                <span id="minYearEnergy">${minYearEnergy}</span>
+                <input type="range" min="${minYearEnergy}" max="${maxYearEnergy}" value="${minYearEnergy}" class="slider" id="yearSlider">
+                <span id="maxYearEnergy">${maxYearEnergy}</span>
             </div>
-            <div id="controls">
-                <button id="addCountryButton">Land hinzufügen</button>
-            </div>
-            <div id="chart_div" style="width: 900px; height: 500px;"></div>
         </div>
 
         <script src="js/energy.js"></script>
