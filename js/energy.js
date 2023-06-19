@@ -46,32 +46,6 @@ var map = L.map('mapid', {
     layers: [osmMapnik, googleStreets, osmMapnik]
 });
 
-function updateYearSlider() {
-    var yearSlider = document.getElementById('yearSlider');
-    var minYearDisplay = document.getElementById('minYearCo2');
-    var maxYearDisplay = document.getElementById('maxYearCo2');
-
-    if (map.hasLayer(energyLayer)) {
-        yearSlider.min = minYearEnergy;
-        yearSlider.max = maxYearEnergy;
-        yearSlider.value = maxYearEnergy;
-        minYearDisplay.textContent = minYearEnergy;
-        maxYearDisplay.textContent = maxYearEnergy;
-    } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
-        yearSlider.min = minYearCo2Pc;
-        yearSlider.max = maxYearCo2Pc;
-        yearSlider.value = maxYearCo2Pc;
-        minYearDisplay.textContent = minYearCo2Pc;
-        maxYearDisplay.textContent = maxYearCo2Pc;
-    }
-}
-
-yearSlider.addEventListener('input', function(e) {
-    selectedYear = parseInt(e.target.value);
-
-    document.getElementById('yearDisplay').textContent = selectedYear;
-});
-
 $.ajax({
     url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
     data: {
@@ -87,23 +61,37 @@ $.ajax({
     success: handleEnergyJson
     });
 
-function handleEnergyJson(data) {
-    energyLayer.addData(data);
-    for (var feature of data.features) {
-        minyear_c = feature.properties.minyear_c;
-        if (minyear_c !== null &&  minyear_c < minYearEnergy) {
-            minYearEnergy = minyear_c;
+    function handleEnergyJson(data) {
+        energyLayer.addData(data);
+        for (var feature of data.features) {
+            minyear_c = feature.properties.minyear_c;
+            if (minyear_c !== null &&  minyear_c < minYearEnergy) {
+                minYearEnergy = minyear_c;
+            }
+            if (feature.properties.maxyear_c > maxYearEnergy) {
+                maxYearEnergy = feature.properties.maxyear_c;
+            }
         }
-        if (feature.properties.maxyear_c > maxYearEnergy) {
-            maxYearEnergy = feature.properties.maxyear_c;
+    
+        var yearPicker = document.getElementById('yearPicker');
+        
+        for (var i = minYearEnergy; i <= maxYearEnergy; i++) {
+            var option = document.createElement('option');
+            option.value = i;
+            option.text = i;
+            yearPicker.appendChild(option);
         }
-    }
-    document.getElementById('minYearEnergy').textContent = minYearEnergy;
-    document.getElementById('maxYearEnergy').textContent = maxYearEnergy;
-    document.getElementById('yearSlider').min = minYearEnergy;
-    document.getElementById('yearSlider').max = maxYearEnergy;
-    document.getElementById('yearSlider').value = maxYearEnergy;
-}
+        
+        yearPicker.value = selectedYear;
+        
+        yearPicker.addEventListener('change', function(e) {
+            selectedYear = parseInt(e.target.value);
+            
+            energyLayer.eachLayer(function (layer) {
+                onEachFeature(layer.feature, layer);
+            });
+        });
+    }    
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
