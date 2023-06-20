@@ -15,6 +15,8 @@ var colors = {
     'Wind': '#ADD8E6'
 }; 
 
+google.charts.load('current', {'packages':['corechart']});
+
 var energyLayer = new L.GeoJSON(null, {
     style: function(feature) {
         return {
@@ -126,6 +128,25 @@ function removePieCharts() {
     pieCharts = [];
 }
 
+function drawChart(countryData) {
+    var data = google.visualization.arrayToDataTable(countryData);
+
+    var options = {
+        chart: {
+            title: 'Energiemix',
+            subtitle: 'Aufteilung der Energiequellen',
+        },
+        hAxis: {title: 'Energieträger'},
+        vAxis: {title: 'Prozentsatz', format: 'decimal'},
+        height: 400,
+    };
+
+    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+
+    chart.draw(data, options);
+}
+
+
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
@@ -212,6 +233,17 @@ function onEachFeature(feature, layer) {
         pieCharts.push(pieChart);
         map.addLayer(pieChart); 
     }
+
+    layer.on('click', function() {
+        var countryData = [['Energiequelle', name]];
+        if (data.length > 0) {    
+            for (let i = 0; i < labels.length; i++) {
+                countryData.push([labels[i], data[i]]);
+            }
+        
+            drawChart(countryData);
+        }
+    });
 
     var popupContent = `
         <strong>${name}</strong><br/>
