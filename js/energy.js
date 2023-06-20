@@ -148,7 +148,20 @@ function drawChart() {
         height: 400,
     };
 
-    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+    var chart = new google.visualization.BarChart(document.getElementById('bar_chart_div'));
+
+    chart.draw(data, options);
+}
+
+function drawPieChart(countryData) {
+    var data = google.visualization.arrayToDataTable(countryData);
+
+    var options = {
+        title: 'Energiemix',
+        is3D: true,
+    };
+
+    var chart = new google.visualization.PieChart(document.getElementById('pie_chart_div'));
 
     chart.draw(data, options);
 }
@@ -242,7 +255,9 @@ function onEachFeature(feature, layer) {
     }
 
     layer.on('click', function() {
-        if (data.length > 0) {  
+        var countryDataPie = [['Energiequelle', 'Prozentsatz']];
+    
+        if (data.length > 0) {
             if (addCountry) {
                 countryData[0].push(name);
                 for (let i = 0; i < labels.length; i++) {
@@ -251,18 +266,26 @@ function onEachFeature(feature, layer) {
                     } else {
                         countryData.push([labels[i], data[i]]);
                     }
+    
+                    if (countryDataPie[i + 1]) {
+                        countryDataPie[i + 1].push(data[i]);
+                    } else {
+                        countryDataPie.push([labels[i], data[i]]);
+                    }
                 }
                 addCountry = false;
             } else {
                 countryData = [['Energiequelle', name]];
                 for (let i = 0; i < labels.length; i++) {
                     countryData.push([labels[i], data[i]]);
+                    countryDataPie.push([labels[i], data[i]]);
                 }
             }
-        
+            
             drawChart();
+            drawPieChart(countryDataPie);
         }
-    });
+    });    
 
     var popupContent = `
         <strong>${name}</strong><br/>
