@@ -91,17 +91,19 @@ function handleEnergyJson(data) {
         option.text = i;
         yearPicker.appendChild(option);
     }
-    
+
     yearPicker.value = selectedYear;
-    
-    yearPicker.addEventListener('change', function(e) {
-        selectedYear = parseInt(e.target.value);
-        
-        energyLayer.eachLayer(function (layer) {
-            onEachFeature(layer.feature, layer);
-        });
-    });
 }    
+
+yearPicker.addEventListener('change', function(e) {
+    selectedYear = parseInt(e.target.value);
+
+    removePieCharts();
+
+    energyLayer.eachLayer(function (layer) {
+        onEachFeature(layer.feature, layer);
+    });
+});
 
 function getDiameter(area) {
     var scaleFactor = 0.00002;
@@ -114,6 +116,16 @@ function getDiameter(area) {
     
     return diameter;
 } 
+
+var pieCharts = [];
+
+function removePieCharts() {
+    for (var i = 0; i < pieCharts.length; i++) {
+        map.removeLayer(pieCharts[i]);
+    }
+    pieCharts = [];
+}
+
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
@@ -188,7 +200,6 @@ function onEachFeature(feature, layer) {
     if (data.length > 0) {    
         var area = turf.area(layer.feature);
         var diameter = getDiameter(area);
-        console.log(diameter);
         var pieOptions = {
             type: 'pie',
             width: diameter, height: diameter,
@@ -198,6 +209,7 @@ function onEachFeature(feature, layer) {
               
         var center = {'lat': center_lat, 'lon': center_lon};
         var pieChart = L.minichart(center, pieOptions);
+        pieCharts.push(pieChart);
         map.addLayer(pieChart); 
     }
 
