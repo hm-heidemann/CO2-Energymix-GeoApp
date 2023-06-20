@@ -15,6 +15,9 @@ var colors = {
     'Wind': '#ADD8E6'
 }; 
 
+var addCountry = false;
+var countryData = [['Energiequelle']];
+
 google.charts.load('current', {'packages':['corechart']});
 
 var energyLayer = new L.GeoJSON(null, {
@@ -128,7 +131,11 @@ function removePieCharts() {
     pieCharts = [];
 }
 
-function drawChart(countryData) {
+document.getElementById('addCountryBtn').addEventListener('click', function() {
+    addCountry = true;
+});
+
+function drawChart() {
     var data = google.visualization.arrayToDataTable(countryData);
 
     var options = {
@@ -235,13 +242,25 @@ function onEachFeature(feature, layer) {
     }
 
     layer.on('click', function() {
-        var countryData = [['Energiequelle', name]];
-        if (data.length > 0) {    
-            for (let i = 0; i < labels.length; i++) {
-                countryData.push([labels[i], data[i]]);
+        if (data.length > 0) {  
+            if (addCountry) {
+                countryData[0].push(name);
+                for (let i = 0; i < labels.length; i++) {
+                    if (countryData[i + 1]) {
+                        countryData[i + 1].push(data[i]);
+                    } else {
+                        countryData.push([labels[i], data[i]]);
+                    }
+                }
+                addCountry = false;
+            } else {
+                countryData = [['Energiequelle', name]];
+                for (let i = 0; i < labels.length; i++) {
+                    countryData.push([labels[i], data[i]]);
+                }
             }
         
-            drawChart(countryData);
+            drawChart();
         }
     });
 
