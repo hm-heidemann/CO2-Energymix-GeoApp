@@ -5,15 +5,13 @@ var maxCo2 = 0;
 
 var selectedYear = 2021;
 var labels = ['Kohle', 'Gas', 'Öl', 'Nuklear', 'Hydro', 'Solar', 'Wind'];
-var colors = {
-    'Kohle': '#8B4513',
-    'Gas': '#808080',
-    'Öl': '#000000',
-    'Nuklear': '#FF0000',
-    'Hydro': '#0000FF',
-    'Solar': '#FFFF00',
-    'Wind': '#ADD8E6'
-}; 
+var colors = ['#8B4513', '#808080', '#000000', '#FF0000', '#0000FF', '#FFFF00', '#ADD8E6'];
+var colorDict = labels.reduce(function(dict, label, index) {
+    dict[label] = colors[index];
+    return dict;
+}, {});
+
+google.charts.load('current', {'packages':['corechart']});
 
 var energyLayer = new L.GeoJSON(null, {
     style: function(feature) {
@@ -126,6 +124,24 @@ function removePieCharts() {
     pieCharts = [];
 }
 
+function drawChart(countryData) {
+    var data = google.visualization.arrayToDataTable(countryData);
+
+    var options = {
+        chart: {
+            title: 'Energiemix',
+            subtitle: 'Aufteilung der Energiequellen',
+        },
+        hAxis: {title: 'Prozentsatz'},
+        vAxis: {title: 'Energieträger', format: 'decimal'},
+        height: 400,
+    };
+
+    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+
+    chart.draw(data, options);
+}
+
 
 function onEachFeature(feature, layer) {
     var name = feature.properties.name_de;
@@ -164,37 +180,37 @@ function onEachFeature(feature, layer) {
     if (coalIndex >= 0 && coal[coalIndex]) {
         data.push(coal[coalIndex]);
         labels.push('Kohle');
-        bgColors.push(colors['Kohle']);
+        bgColors.push(colorDict['Kohle']);
     }
     if (gasIndex >= 0 && gas[gasIndex]) {
         data.push(gas[gasIndex]);
         labels.push('Gas');
-        bgColors.push(colors['Gas']);
+        bgColors.push(colorDict['Gas']);
     }
     if (oilIndex >= 0 && oil[oilIndex]) {
         data.push(oil[oilIndex]);
         labels.push('Öl');
-        bgColors.push(colors['Öl']);
+        bgColors.push(colorDict['Öl']);
     }
     if (nuclearIndex >= 0 && nuclear[nuclearIndex]) {
         data.push(nuclear[nuclearIndex]);
         labels.push('Nuklear');
-        bgColors.push(colors['Nuklear']);
+        bgColors.push(colorDict['Nuklear']);
     }
     if (hydroIndex >= 0 && hydro[hydroIndex]) {
         data.push(hydro[hydroIndex]);
         labels.push('Hydro');
-        bgColors.push(colors['Hydro']);
+        bgColors.push(colorDict['Hydro']);
     }
     if (solarIndex >= 0 && solar[solarIndex]) {
         data.push(solar[solarIndex]);
         labels.push('Solar');
-        bgColors.push(colors['Solar']);
+        bgColors.push(colorDict['Solar']);
     }
     if (windIndex >= 0 && wind[windIndex]) {
         data.push(wind[windIndex]);
         labels.push('Wind');
-        bgColors.push(colors['Wind']);
+        bgColors.push(colorDict['Wind']);
     }
 
     if (data.length > 0) {    
@@ -212,6 +228,17 @@ function onEachFeature(feature, layer) {
         pieCharts.push(pieChart);
         map.addLayer(pieChart); 
     }
+
+    layer.on('click', function() {
+        var countryData = [['Energiequelle', name]];
+        if (data.length > 0) {    
+            for (let i = 0; i < labels.length; i++) {
+                countryData.push([labels[i], data[i]]);
+            }
+        
+            drawChart(countryData);
+        }
+    });
 
     var popupContent = `
         <strong>${name}</strong><br/>
@@ -241,7 +268,7 @@ legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend');
     labels.forEach((label) => {
         div.innerHTML += 
-        '<i style="background:' + colors[label] + '"></i> ' +
+        '<i style="background:' + colorDict[label] + '"></i> ' +
         (label ? label + '<br>' : '+');
     });
 
