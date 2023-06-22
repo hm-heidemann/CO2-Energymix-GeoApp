@@ -79,3 +79,9 @@
     margin-right: 8px;
     opacity: 0.7; 
 }	
+
+.button-active {
+    background-color: white;
+    color: blue;
+    border-color: blue;
+}

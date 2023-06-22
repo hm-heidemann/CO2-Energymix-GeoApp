@@ -18,6 +18,8 @@ var colors = {
 var addCountry = false;
 var countryData = [['Energiequelle']];
 
+var addCountryBtn = document.getElementById('addCountryBtn');
+
 google.charts.load('current', {'packages':['corechart']});
 
 var energyLayer = new L.GeoJSON(null, {
@@ -133,6 +135,7 @@ function removePieCharts() {
 }
 
 document.getElementById('addCountryBtn').addEventListener('click', function() {
+    addCountryBtn.classList.add('button-active');
     addCountry = true;
 });
 
@@ -236,6 +239,7 @@ function onEachFeature(feature, layer) {
                         countryData.push([labels[i], data[i]]);
                     }
                 }
+                addCountryBtn.classList.remove('button-active');
                 addCountry = false;
             } else {
                 countryData = [['Energiequelle', name]];

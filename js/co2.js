@@ -18,6 +18,8 @@ var grades_arr_co2_pc = [0, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, Number.MAX_SAFE_INTE
 colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length);
 colorRampPerCapita = chroma.scale('OrRd').classes(grades_arr_co2_pc.length);
 
+var addCountryBtn = document.getElementById('addCountryBtn');
+
 var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
 var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeaturePerCap});
 
@@ -90,7 +92,8 @@ yearSlider.addEventListener('input', function(e) {
     }
 });
 
-document.getElementById("addCountryButton").addEventListener("click", function() {
+document.getElementById("addCountryBtn").addEventListener("click", function() {
+        addCountryBtn.classList.add('button-active');
         addCountryMode = true;
 });
 
@@ -295,6 +298,8 @@ function onEachFeature(feature, layer) {
         layer.on('click', function (e) {
             if (addCountryMode) {
                 addCountryToChart(feature, layer);
+                addCountryBtn.classList.remove('button-active');
+                addCountryMode = false;
             } else {
                 drawChartForCountry(feature, layer);
             }
@@ -320,6 +325,8 @@ function onEachFeaturePerCap(feature, layer) {
         layer.on('click', function (e) {
             if (addCountryMode) {
                 addCountryToChart(feature, layer);
+                addCountryBtn.classList.remove('button-active');
+                addCountryMode = false;
             } else {
                 drawChartForCountry(feature, layer);
             }
