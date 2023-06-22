@@ -1,3 +1,7 @@
+// TODO 
+// refactoring
+// clear chart when changing layer
+
 var addCountryMode = false;
 
 var minYearCo2 = Number.MAX_SAFE_INTEGER;

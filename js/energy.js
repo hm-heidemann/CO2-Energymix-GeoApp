@@ -1,3 +1,7 @@
+// TODO
+// Simple Layer hinzufügen
+// Button "Hide pie charts"
+
 var minYearEnergy = Number.MAX_SAFE_INTEGER;
 var maxYearEnergy = 0;
 
