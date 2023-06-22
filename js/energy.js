@@ -102,6 +102,7 @@ function handleEnergyJson(data) {
 
 yearPicker.addEventListener('change', function(e) {
     selectedYear = parseInt(e.target.value);
+    document.getElementById('yearDisplay').textContent = "Energiemix im Jahr  " + selectedYear;
 
     removePieCharts();
 
@@ -143,29 +144,15 @@ function drawChart() {
             title: 'Energiemix',
             subtitle: 'Aufteilung der Energiequellen',
         },
-        hAxis: {title: 'Energieträger'},
-        vAxis: {title: 'Prozentsatz', format: 'decimal'},
-        height: 400,
+        legend: { position: 'bottom' },
+        hAxis: {title: 'Prozentsatz'},
+        vAxis: {title: 'Energieträger', format: 'decimal'},
     };
 
-    var chart = new google.visualization.BarChart(document.getElementById('bar_chart_div'));
+    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
 
     chart.draw(data, options);
 }
-
-function drawPieChart(countryData) {
-    var data = google.visualization.arrayToDataTable(countryData);
-
-    var options = {
-        title: 'Energiemix',
-        is3D: true,
-    };
-
-    var chart = new google.visualization.PieChart(document.getElementById('pie_chart_div'));
-
-    chart.draw(data, options);
-}
-
 
 
 function onEachFeature(feature, layer) {
@@ -202,40 +189,24 @@ function onEachFeature(feature, layer) {
     
     var bgColors = [];
 
-    if (coalIndex >= 0 && coal[coalIndex]) {
-        data.push(coal[coalIndex]);
-        labels.push('Kohle');
-        bgColors.push(colors['Kohle']);
-    }
-    if (gasIndex >= 0 && gas[gasIndex]) {
-        data.push(gas[gasIndex]);
-        labels.push('Gas');
-        bgColors.push(colors['Gas']);
-    }
-    if (oilIndex >= 0 && oil[oilIndex]) {
-        data.push(oil[oilIndex]);
-        labels.push('Öl');
-        bgColors.push(colors['Öl']);
-    }
-    if (nuclearIndex >= 0 && nuclear[nuclearIndex]) {
-        data.push(nuclear[nuclearIndex]);
-        labels.push('Nuklear');
-        bgColors.push(colors['Nuklear']);
-    }
-    if (hydroIndex >= 0 && hydro[hydroIndex]) {
-        data.push(hydro[hydroIndex]);
-        labels.push('Hydro');
-        bgColors.push(colors['Hydro']);
-    }
-    if (solarIndex >= 0 && solar[solarIndex]) {
-        data.push(solar[solarIndex]);
-        labels.push('Solar');
-        bgColors.push(colors['Solar']);
-    }
-    if (windIndex >= 0 && wind[windIndex]) {
-        data.push(wind[windIndex]);
-        labels.push('Wind');
-        bgColors.push(colors['Wind']);
+    let energyTypes = [
+        {name: 'Kohle', data: coal, index: coalIndex},
+        {name: 'Gas', data: gas, index: gasIndex},
+        {name: 'Öl', data: oil, index: oilIndex},
+        {name: 'Nuklear', data: nuclear, index: nuclearIndex},
+        {name: 'Hydro', data: hydro, index: hydroIndex},
+        {name: 'Solar', data: solar, index: solarIndex},
+        {name: 'Wind', data: wind, index: windIndex}
+    ];
+
+    for (let energy of energyTypes) {
+        if (energy.index >= 0 && energy.data[energy.index]) {
+            data.push(energy.data[energy.index]);
+        } else {
+            data.push(0);
+        }
+        labels.push(energy.name);
+        bgColors.push(colors[energy.name]);
     }
 
     if (data.length > 0) {    
@@ -255,8 +226,6 @@ function onEachFeature(feature, layer) {
     }
 
     layer.on('click', function() {
-        var countryDataPie = [['Energiequelle', 'Prozentsatz']];
-    
         if (data.length > 0) {
             if (addCountry) {
                 countryData[0].push(name);
@@ -266,24 +235,16 @@ function onEachFeature(feature, layer) {
                     } else {
                         countryData.push([labels[i], data[i]]);
                     }
-    
-                    if (countryDataPie[i + 1]) {
-                        countryDataPie[i + 1].push(data[i]);
-                    } else {
-                        countryDataPie.push([labels[i], data[i]]);
-                    }
                 }
                 addCountry = false;
             } else {
                 countryData = [['Energiequelle', name]];
                 for (let i = 0; i < labels.length; i++) {
                     countryData.push([labels[i], data[i]]);
-                    countryDataPie.push([labels[i], data[i]]);
                 }
             }
-            
+    
             drawChart();
-            drawPieChart(countryDataPie);
         }
     });    
 
