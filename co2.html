@@ -24,7 +24,7 @@
     
     
     <body>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light tabs">
             <a class="navbar-brand">CO2 Emissionen und Energiemix</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -40,19 +40,35 @@
                 </ul>
             </div>
         </nav>    
-        <div class="container"> 
-            <h2 id="yearDisplay">2021</h2>
-            <div class="map" id="mapid"></div>
-            <div class="slider">
-                <span id="minYearCo2">${minYearCo2}</span>
-                <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" class="slider" id="yearSlider">
-                <span id="maxYearCo2">${maxYearCo2}</span>
+        <div class="container-fluid"> 
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 id="yearDisplay">CO2 Emissionen im Jahr 2021</h5>
+                            <div class="d-flex align-items-center">
+                                <button id="addCountryButton" class="btn btn-primary mr-2">+</button>
+                                <div class="slider d-flex align-items-center">
+                                    <span id="minYearCo2">${minYearCo2}</span>
+                                    <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" id="yearSlider">
+                                    <span id="maxYearCo2">${maxYearCo2}</span>
+                                </div>
+                            </div> 
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-8">
+                                    <div class="map" id="mapid"></div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="chart" id="chart_div"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="controls">
-                <button id="addCountryButton">Land hinzufügen</button>
-            </div>
-            <div id="chart_div" style="width: 900px; height: 500px;"></div>
-        </div>
+        </div>                
 
         <script src="js/co2.js"></script>    
    
