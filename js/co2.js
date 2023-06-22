@@ -75,14 +75,14 @@ function updateYearSlider() {
 yearSlider.addEventListener('input', function(e) {
     selectedYear = parseInt(e.target.value);
 
-    document.getElementById('yearDisplay').textContent = selectedYear;
-
     if (map.hasLayer(co2EmissionsLayer)) {
+        document.getElementById('yearDisplay').textContent = "CO2 Emissionen im Jahr " + selectedYear;
         co2EmissionsLayer.setStyle(totalCo2Style);
         co2EmissionsLayer.eachLayer(function (layer) {
             onEachFeature(layer.feature, layer);
         });
     } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+        document.getElementById('yearDisplay').textContent = "CO2 Emissionen pro Kopf im Jahr " + selectedYear;
         co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
         co2EmissionsPerCapitaLayer.eachLayer(function (layer) {
             onEachFeaturePerCap(layer.feature, layer);
