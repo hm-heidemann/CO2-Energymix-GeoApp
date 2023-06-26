@@ -51,17 +51,24 @@ togglePieChartsButton.addEventListener('click', function() {
         for (var i = 0; i < pieCharts.length; i++) {
             map.removeLayer(pieCharts[i]);
         }
+        for (var i = 0; i < simplePieCharts.length; i++) {
+            map.removeLayer(simplePieCharts[i]);
+        }
         togglePieChartsButton.textContent = "Kreisdiagramme einblenden";
         togglePieChartsButton.classList.remove('button-active');
     } else {
         for (var i = 0; i < pieCharts.length; i++) {
             map.addLayer(pieCharts[i]);
         }
+        for (var i = 0; i < simplePieCharts.length; i++) {
+            map.addLayer(simplePieCharts[i]);
+        }
         togglePieChartsButton.textContent = "Kreisdiagramme ausblenden";
         togglePieChartsButton.classList.add('button-active');
     }
     pieChartsVisible = !pieChartsVisible;
 });
+
 
 google.charts.load('current', {'packages':['corechart']});
 
@@ -188,11 +195,7 @@ yearPicker.addEventListener('change', function(e) {
 
     clearChart();
     removePieCharts();
-
-    energyLayer.eachLayer(function (layer) {
-        layer.off('click');
-        onEachFeature(layer.feature, layer);
-    });
+    updatePieCharts();
 });
 
 function getDiameter(area) {
@@ -208,6 +211,7 @@ function getDiameter(area) {
 } 
 
 var pieCharts = [];
+var simplePieCharts = [];
 
 function removePieCharts() {
     for (var i = 0; i < pieCharts.length; i++) {
@@ -216,8 +220,22 @@ function removePieCharts() {
     pieCharts = [];
 }
 
+function removeSimplePieCharts() {
+    for (var i = 0; i < simplePieCharts.length; i++) {
+        map.removeLayer(simplePieCharts[i]);
+    }
+    simplePieCharts = [];
+}
+
+
 function updatePieCharts() {
-    removePieCharts();
+    togglePieChartsButton.textContent = "Kreisdiagramme ausblenden";
+    togglePieChartsButton.classList.add('button-active');
+    if (currentLayerType === 'simple') {
+        removePieCharts();
+    } else if (currentLayerType === 'detailed') {
+        removeSimplePieCharts();
+    }
 
     if (currentLayerType === 'simple') {
         simpleEnergyLayer.eachLayer(function (layer) {
@@ -394,7 +412,7 @@ function onEachFeatureSimple(feature, layer) {
     let energyTypes = [
         {name: 'Erneuerbar', data: renewables, index: renewablesIndex},
         {name: 'Fossil', data: fossil, index: fossilIndex}, 
-        {name: 'Low Carb', data: lowcarb, index: lowcarbIndex}
+        {name: 'Low Carbon', data: lowcarb, index: lowcarbIndex}
     ];
     
     let dataCount = 0;
@@ -404,7 +422,7 @@ function onEachFeatureSimple(feature, layer) {
             barData.push(energy.data[energy.index]);
             barLabels.push(energy.name);
     
-            if (energy.name !== 'Low Carb') {
+            if (energy.name !== 'Low Carbon') {
                 pieData.push(energy.data[energy.index]);
                 pieLabels.push(energy.name);
                 bgColors.push(simpleColors[energy.name]);
@@ -412,7 +430,7 @@ function onEachFeatureSimple(feature, layer) {
             dataCount++;
         } else {
             barData.push(0);
-            if (energy.name !== 'Low Carb') {
+            if (energy.name !== 'Low Carbon') {
                 pieData.push(0);
             }
         }
@@ -430,7 +448,7 @@ function onEachFeatureSimple(feature, layer) {
                 
         var center = {'lat': center_lat, 'lon': center_lon};
         var pieChart = L.minichart(center, pieOptions);
-        pieCharts.push(pieChart);
+        simplePieCharts.push(pieChart);
         map.addLayer(pieChart); 
     }    
 
