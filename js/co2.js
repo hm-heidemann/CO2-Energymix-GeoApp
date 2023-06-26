@@ -257,7 +257,6 @@ function addCountryToChart(feature, layer) {
     drawChart(dataMatrix);
 }
 
-
 function drawChartForCountry(feature, layer) {
     var year_arr = JSON.parse(feature.properties.year).map(Number);
     var countryName = feature.properties.name_de;
@@ -361,33 +360,41 @@ legend.onAdd = function (map) {
 
 legend.addTo(map);
 
+function getCo2Legend() {
+    var result = '<i style="background:gray"></i> Keine Daten<br>';
+    for (var i = 0; i < grades_arr_co2.length - 1; i++) {
+        var from = grades_arr_co2[i];
+        var to = grades_arr_co2[i + 1];
+
+        var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Mrd. t' : from >= 1e6 ? (from / 1e6) + 'Mio. t' : from;
+        var toFormatted = to >= 1e9 ? (to / 1e9) + 'Mrd. t' : to >= 1e6 ? (to / 1e6) + 'Mio. t' : to;
+
+        result += '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
+            fromFormatted + (i < grades_arr_co2.length - 2 ? ' &ndash; ' + toFormatted + '<br>' : '+');
+    }
+    return result;
+}
+
+function getCo2LegendPerCap() {
+    var result = '<i style="background:gray"></i> Keine Daten<br>';
+    for (var i = 0; i < grades_arr_co2_pc.length - 1; i++) {
+        var from = grades_arr_co2_pc[i];
+        var to = grades_arr_co2_pc[i + 1];
+
+        result += '<i style="background:' + getCo2ColorPerCapita(from + 1) + '"></i> ' +
+            from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : 't+');
+    }
+    return result;
+}
+
 function updateLegend() {
     var div = legend.getContainer();
     div.innerHTML = '';
     
     if (map.hasLayer(co2EmissionsLayer)) {
-        div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
-        for (var i = 0; i < grades_arr_co2.length - 1; i++) {
-            var from = grades_arr_co2[i];
-            var to = grades_arr_co2[i + 1];
-
-            var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Mrd. t' : from >= 1e6 ? (from / 1e6) + 'Mio. t' : from;
-            var toFormatted = to >= 1e9 ? (to / 1e9) + 'Mrd. t' : to >= 1e6 ? (to / 1e6) + 'Mio. t' : to;
-
-            div.innerHTML +=
-                '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
-                fromFormatted + (i < grades_arr_co2.length - 2 ? ' &ndash; ' + toFormatted + '<br>' : '+');
-        }
+        div.innerHTML = getCo2Legend();
     } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
-        div.innerHTML += '<i style="background:gray"></i> Keine Daten<br>';
-        for (var i = 0; i < grades_arr_co2_pc.length - 1; i++) {
-            var from = grades_arr_co2_pc[i];
-            var to = grades_arr_co2_pc[i + 1];
-
-            div.innerHTML +=
-                '<i style="background:' + getCo2ColorPerCapita(from + 1) + '"t></i> ' +
-                from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : 't+');
-        }
+        div.innerHTML = getCo2LegendPerCap();
     }
 }
 
@@ -443,14 +450,6 @@ function drawChart(dataMatrix) {
     };
 
     var chart = new google.visualization.LineChart(document.getElementById('chart'));
-
-    var formatter = new google.visualization.NumberFormat({
-        pattern: '#,##0.00',
-        fractionDigits: 0
-    });
-    for (var i = 1; i < data.getNumberOfColumns(); i++) {
-        formatter.format(data, i);
-    }
 
     google.visualization.events.addListener(chart, 'ready', function () {
         var labels = chart.getContainer().getElementsByTagName('text');
