@@ -9,13 +9,12 @@ var maxCo2 = 0;
 var maxCo2PerCap = 0;
 
 let selectedYear = maxYear;
-var maxCo2Allowed = 0;
+var maxCo2Allowed = 1e9;
+var maxCo2PerCapAllowed = 20;
 var numb_classes = 10;
 var classwidth_between_fac = 1/numb_classes;
-var grades_arr_co2 = [0, 20e6, 50e6, 100e6, 200e6, 500e6, 1e9, 2e9, 5e9, 10e9, Number.MAX_SAFE_INTEGER];
-var grades_arr_co2_pc = [0, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, Number.MAX_SAFE_INTEGER];
-colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length);
-colorRampPerCapita = chroma.scale('OrRd').classes(grades_arr_co2_pc.length);
+colorRamp = chroma.scale('OrRd').domain([0, maxCo2Allowed]).classes(numb_classes);
+colorRampPerCapita = chroma.scale('OrRd').domain([0, maxCo2PerCapAllowed]).classes(numb_classes);
 
 var addCountryBtn = document.getElementById('addCountryBtn');
 addCountryBtn.style.display = countryAdded ? "block" : "none";
@@ -157,11 +156,7 @@ function handleJsonPerCapita(data) {
 }
 
 function getCo2Color(co2Value) {
-    for (var i = 0; i < grades_arr_co2.length; i++) {
-        if (co2Value <= grades_arr_co2[i]) {
-            return colorRamp(i / (grades_arr_co2.length - 1)).hex();
-        }
-    }
+    return colorRamp(co2Value).hex();
 }
 
 function totalCo2Style(feature) {
@@ -195,11 +190,7 @@ function totalCo2Style(feature) {
 }
 
 function getCo2ColorPerCapita(co2Value) {
-    for (var i = 0; i < grades_arr_co2_pc.length; i++) {
-        if (co2Value <= grades_arr_co2_pc[i]) {
-            return colorRampPerCapita(i / (grades_arr_co2_pc.length - 1)).hex();
-        }
-    }
+    return colorRampPerCapita(co2Value).hex();
 }
 
 function totalCo2StylePerCapita(feature) {
@@ -385,27 +376,28 @@ legend.addTo(map);
 
 function getCo2Legend() {
     var result = '<i style="background:gray"></i> Keine Daten<br>';
-    for (var i = 0; i < grades_arr_co2.length - 1; i++) {
-        var from = grades_arr_co2[i];
-        var to = grades_arr_co2[i + 1];
+    for (var i = 0; i < numb_classes; i++) {
+        var from = i * (maxCo2Allowed / numb_classes);
+        var to = (i + 1) * (maxCo2Allowed / numb_classes);
 
         var fromFormatted = from >= 1e9 ? (from / 1e9) + 'Mrd. t' : from >= 1e6 ? (from / 1e6) + 'Mio. t' : from;
         var toFormatted = to >= 1e9 ? (to / 1e9) + 'Mrd. t' : to >= 1e6 ? (to / 1e6) + 'Mio. t' : to;
+        console.log(colorRamp);
 
-        result += '<i style="background:' + getCo2Color(from + 1) + '"></i> ' +
-            fromFormatted + (i < grades_arr_co2.length - 2 ? ' &ndash; ' + toFormatted + '<br>' : '+');
+        result += '<i style="background:' + getCo2Color((from+to)/2) + '"></i> ' +
+            fromFormatted + (i < numb_classes - 1 ? ' &ndash; ' + toFormatted + '<br>' : '+');
     }
     return result;
 }
 
 function getCo2LegendPerCap() {
     var result = '<i style="background:gray"></i> Keine Daten<br>';
-    for (var i = 0; i < grades_arr_co2_pc.length - 1; i++) {
-        var from = grades_arr_co2_pc[i];
-        var to = grades_arr_co2_pc[i + 1];
+    for (var i = 0; i < numb_classes; i++) {
+        var from = i * (maxCo2PerCapAllowed / numb_classes);
+        var to = (i + 1) * (maxCo2PerCapAllowed / numb_classes);
 
-        result += '<i style="background:' + getCo2ColorPerCapita(from + 1) + '"></i> ' +
-            from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : 't+');
+        result += '<i style="background:' + getCo2ColorPerCapita((from+to)/2) + '"></i> ' +
+            from + (i < numb_classes - 1 ? 't &ndash; ' + to + 't <br>' : 't+');
     }
     return result;
 }
