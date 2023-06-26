@@ -57,11 +57,11 @@ togglePieChartsButton.addEventListener('click', function() {
         togglePieChartsButton.textContent = "Kreisdiagramme einblenden";
         togglePieChartsButton.classList.remove('button-active');
     } else {
-        for (var i = 0; i < pieCharts.length; i++) {
-            map.addLayer(pieCharts[i]);
-        }
         for (var i = 0; i < simplePieCharts.length; i++) {
             map.addLayer(simplePieCharts[i]);
+        }
+        for (var i = 0; i < pieCharts.length; i++) {
+            map.addLayer(pieCharts[i]);
         }
         togglePieChartsButton.textContent = "Kreisdiagramme ausblenden";
         togglePieChartsButton.classList.add('button-active');
@@ -72,7 +72,7 @@ togglePieChartsButton.addEventListener('click', function() {
 
 google.charts.load('current', {'packages':['corechart']});
 
-var energyLayer = new L.GeoJSON(null, {
+var electricityLayer = new L.GeoJSON(null, {
     style: function(feature) {
         return {
             fillColor: 'transparent',
@@ -84,7 +84,7 @@ var energyLayer = new L.GeoJSON(null, {
     onEachFeature: onEachFeature
 });
 
-var simpleEnergyLayer = new L.GeoJSON(null, {
+var simpleElectricityLayer = new L.GeoJSON(null, {
     style: function(feature) {
         return {
             fillColor: 'transparent',
@@ -156,11 +156,11 @@ $.ajax({
 });
 
 function handleSimpleEnergyJson(data) {
-    simpleEnergyLayer.addData(data);
+    simpleElectricityLayer.addData(data);
 }    
 
 function handleEnergyJson(data) {
-    energyLayer.addData(data);
+    electricityLayer.addData(data);
     for (var feature of data.features) {
         minyear_c = feature.properties.minyear_c;
         if (minyear_c !== null &&  minyear_c < minYearEnergy) {
@@ -238,12 +238,12 @@ function updatePieCharts() {
     }
 
     if (currentLayerType === 'simple') {
-        simpleEnergyLayer.eachLayer(function (layer) {
+        simpleElectricityLayer.eachLayer(function (layer) {
             layer.off('click');
             onEachFeatureSimple(layer.feature, layer);
         });
     } else if (currentLayerType === 'detailed') {
-        energyLayer.eachLayer(function (layer) {
+        electricityLayer.eachLayer(function (layer) {
             layer.off('click');
             onEachFeature(layer.feature, layer);
         });
@@ -384,7 +384,7 @@ function onEachFeature(feature, layer) {
     layer.bindPopup(popupContent);
 }
 
-map.addLayer(energyLayer);
+map.addLayer(electricityLayer);
 
 function onEachFeatureSimple(feature, layer) {
     var name = feature.properties.name_de;
@@ -490,8 +490,8 @@ var baseMaps = {
 };
 
 var overlayMaps = {
-    "Energiemix": energyLayer, 
-    "Energiemix vereinfacht": simpleEnergyLayer
+    "Energiemix": electricityLayer, 
+    "Energiemix vereinfacht": simpleElectricityLayer
 };
 
 L.control.layers(baseMaps, overlayMaps).addTo(map);
@@ -529,9 +529,9 @@ function updateLegend() {
     var div = legend.getContainer();
     div.innerHTML = '';
 
-    if (map.hasLayer(energyLayer)) {
+    if (map.hasLayer(electricityLayer)) {
         div.innerHTML = getDetailedLegend();
-    } else if (map.hasLayer(simpleEnergyLayer)) {
+    } else if (map.hasLayer(simpleElectricityLayer)) {
         div.innerHTML = getSimpleLegend();
     }
 }
@@ -545,9 +545,9 @@ function updateCardTitle() {
 }
 
 map.on('overlayadd', function(e) {
-    if (map.hasLayer(energyLayer)) {
+    if (map.hasLayer(electricityLayer)) {
         currentLayerType = 'detailed';
-    } else if (map.hasLayer(simpleEnergyLayer)) {
+    } else if (map.hasLayer(simpleElectricityLayer)) {
         currentLayerType = 'simple';
     }
     clearChart();
@@ -556,9 +556,9 @@ map.on('overlayadd', function(e) {
     updateLegend();
 });
 map.on('overlayremove', function(e) {
-    if (map.hasLayer(energyLayer)) {
+    if (map.hasLayer(electricityLayer)) {
         currentLayerType = 'detailed';
-    } else if (map.hasLayer(simpleEnergyLayer)) {
+    } else if (map.hasLayer(simpleElectricityLayer)) {
         currentLayerType = 'simple';
     }
     clearChart();
