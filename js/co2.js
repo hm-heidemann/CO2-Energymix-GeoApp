@@ -67,7 +67,7 @@ var map = L.map('mapid', {
 
 google.charts.load('current', {'packages':['corechart']});
 
-function updateYearDisplay() {
+function updateCardTitle() {
     if (map.hasLayer(co2EmissionsLayer)) {
         document.getElementById('cardHeader').textContent = "CO2 Emissionen im Jahr " + selectedYear;
     } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
@@ -78,7 +78,7 @@ function updateYearDisplay() {
 yearSlider.addEventListener('input', function(e) {
     selectedYear = parseInt(e.target.value);
     
-    updateYearDisplay();
+    updateCardTitle();
 
     if (map.hasLayer(co2EmissionsLayer)) {
         co2EmissionsLayer.setStyle(totalCo2Style);
@@ -412,12 +412,12 @@ function clearChart() {
 map.on('overlayadd', function(e) {
     clearChart();
     updateLegend();   
-    updateYearDisplay();
+    updateCardTitle();
 });
 map.on('overlayremove', function(e) {
     clearChart();
     updateLegend();
-    updateYearDisplay();
+    updateCardTitle();
 });
 
 updateLegend();
