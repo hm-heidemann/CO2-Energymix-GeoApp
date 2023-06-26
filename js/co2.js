@@ -284,6 +284,21 @@ function drawChartForCountry(feature, layer) {
     drawChart(dataMatrix);
 }
 
+function getTrend(year, co2) {
+    if (year.length < 10) {
+        return null;
+    }
+
+    var startYearIndex = year.length - 10;
+    var endYearIndex = year.length - 1;
+
+    var startYearCo2 = co2[startYearIndex];
+    var endYearCo2 = co2[endYearIndex];
+
+    return endYearCo2 > startYearCo2 ? "up" : "down";
+}
+
+
 function onEachFeature(feature, layer) {
     if (feature.properties && feature.properties.year && feature.properties.annual_co2) {
         layer.on('click', function (e) {
@@ -299,12 +314,15 @@ function onEachFeature(feature, layer) {
         var year_arr = JSON.parse(feature.properties.year);
         var annual_co2_arr = JSON.parse(feature.properties.annual_co2);
 
+        var trend = getTrend(year_arr, annual_co2_arr);
+
         var yearIndex = year_arr.indexOf(selectedYear);
         if (yearIndex > -1) {
             var co2DataForYear = annual_co2_arr[yearIndex];
-            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>CO2 Emissionen für ' + selectedYear + ': ' + co2DataForYear/1000000 + ' Mio. t </pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br>CO2 Emissionen für ' + selectedYear + ': ' + co2DataForYear/1000000 + ' Mio. t <br>Trend: '
+             + (trend === "up" ? '<i class="fas fa-arrow-up" style="color:red"></i>' : '<i class="fas fa-arrow-down" style="color:green"></i>') + '</pre>');
         } else {
-            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>Keine CO2 Daten für ' + selectedYear + '</pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br>Keine CO2 Daten für ' + selectedYear + '</pre>');
         }
     } else {
         layer.bindPopup('<pre>Keine CO2 Daten für ' + selectedYear + '</pre>');
@@ -326,10 +344,13 @@ function onEachFeaturePerCap(feature, layer) {
         var year_arr = JSON.parse(feature.properties.year);
         var annual_co2_pc_arr = JSON.parse(feature.properties.annual_co2_pc);
 
+        var trend = getTrend(year_arr, annual_co2_pc_arr);
+
         var yearIndex = year_arr.indexOf(selectedYear);
         if (yearIndex > -1) {
             var co2DataForYear = annual_co2_pc_arr[yearIndex];
-            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>CO2 Emissionen pro Kopf für ' + selectedYear + ': ' + co2DataForYear + ' t </pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>CO2 Emissionen pro Kopf für ' + selectedYear + ': ' + co2DataForYear + ' t <br>Trend: '
+            + (trend === "up" ? '<i class="fas fa-arrow-up" style="color:red"></i>' : '<i class="fas fa-arrow-down" style="color:green"></i>') + '</pre>');
         } else {
             layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>Keine CO2 Daten für ' + selectedYear + '</pre>');
         }
