@@ -1,21 +1,14 @@
-// TODO 
-// refactoring
-// clear chart when changing layer
-
 var addCountryMode = false;
 var countryAdded = false;
 var chartAdded = false;
 
-var minYearCo2 = Number.MAX_SAFE_INTEGER;
-var maxYearCo2 = 2021;
-var minYearCo2Pc = Number.MAX_SAFE_INTEGER;
-var maxYearCo2Pc = 2021;
+var minYear = 1750;
+var maxYear = 2021;
 
-var co2Emissions = 0;
 var maxCo2 = 0;
 var maxCo2PerCap = 0;
 
-let selectedYear = maxYearCo2;
+let selectedYear = maxYear;
 var maxCo2Allowed = 0;
 var numb_classes = 10;
 var classwidth_between_fac = 1/numb_classes;
@@ -29,6 +22,16 @@ addCountryBtn.style.display = countryAdded ? "block" : "none";
 
 var chartButton = document.getElementById('clearChartBtn');
 chartButton.style.display = chartAdded ? "block" : "none";
+
+var yearSlider = document.getElementById('yearSlider');
+var minYearDisplay = document.getElementById('minYear');
+var maxYearDisplay = document.getElementById('maxYear');
+
+yearSlider.min = minYear;
+yearSlider.max = maxYear;
+yearSlider.value = maxYear;
+minYearDisplay.textContent = minYear;
+maxYearDisplay.textContent = maxYear;
 
 var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
 var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeaturePerCap});
@@ -63,26 +66,6 @@ var map = L.map('mapid', {
 });
 
 google.charts.load('current', {'packages':['corechart']});
-
-function updateYearSlider() {
-    var yearSlider = document.getElementById('yearSlider');
-    var minYearDisplay = document.getElementById('minYearCo2');
-    var maxYearDisplay = document.getElementById('maxYearCo2');
-
-    if (map.hasLayer(co2EmissionsLayer)) {
-        yearSlider.min = minYearCo2;
-        yearSlider.max = maxYearCo2;
-        yearSlider.value = maxYearCo2;
-        minYearDisplay.textContent = minYearCo2;
-        maxYearDisplay.textContent = maxYearCo2;
-    } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
-        yearSlider.min = minYearCo2Pc;
-        yearSlider.max = maxYearCo2Pc;
-        yearSlider.value = maxYearCo2Pc;
-        minYearDisplay.textContent = minYearCo2Pc;
-        maxYearDisplay.textContent = maxYearCo2Pc;
-    }
-}
 
 function updateYearDisplay() {
     if (map.hasLayer(co2EmissionsLayer)) {
@@ -153,16 +136,8 @@ function handleCo2Json(data) {
             if (feature.properties.mannual_co2 > maxCo2) {
                 maxCo2 = feature.properties.mannual_co2;
             }
-            if (feature.properties.minyear != 0 && (feature.properties.minyear< minYearCo2)) {
-                minYearCo2 = feature.properties.minyear;
-            }
         }
     }
-    document.getElementById('minYearCo2').textContent = minYearCo2;
-    document.getElementById('maxYearCo2').textContent = maxYearCo2;
-    document.getElementById('yearSlider').min = minYearCo2;
-    document.getElementById('yearSlider').max = maxYearCo2;
-    document.getElementById('yearSlider').value = maxYearCo2;
     co2EmissionsLayer.setStyle(totalCo2Style);
 }
 
@@ -173,9 +148,6 @@ function handleJsonPerCapita(data) {
         if (feature.properties && feature.properties.mannual_co2_pc && feature.properties.minyear) {
             if (feature.properties.mannual_co2 > maxCo2) {
                 maxCo2PerCap = feature.properties.mannual_co2;
-            }
-            if (feature.properties.minyear != 0 && (feature.properties.minyear < minYearCo2Pc)) {
-                minYearCo2Pc = feature.properties.minyear;
             }
         }
     }
@@ -298,14 +270,14 @@ function drawChartForCountry(feature, layer) {
     }
 
     dataMatrix = [];
-    for (var i = minYearCo2; i <= maxYearCo2; i++) {
+    for (var i = minYear; i <= maxYear; i++) {
         dataMatrix.push([i, null]);
     }
     
     dataMatrix.unshift(['Jahr', countryName]);
 
     for(var i = 0; i < year_arr.length; i++) {
-        dataMatrix[year_arr[i] - minYearCo2 + 1][1] = co2_arr[i];
+        dataMatrix[year_arr[i] - minYear + 1][1] = co2_arr[i];
     }
 
     drawChart(dataMatrix);
@@ -423,7 +395,7 @@ function clearChart() {
     chartAdded = false;
     chartButton.style.display = "none";
 
-    var chart = document.getElementById('chart_div');
+    var chart = document.getElementById('chart');
     chart.style.display = "none";
 
     countryAdded = false;
@@ -432,13 +404,11 @@ function clearChart() {
 
 map.on('overlayadd', function(e) {
     clearChart();
-    updateYearSlider();
     updateLegend();   
     updateYearDisplay();
 });
 map.on('overlayremove', function(e) {
     clearChart();
-    updateYearSlider();
     updateLegend();
     updateYearDisplay();
 });
@@ -449,7 +419,7 @@ function drawChart(dataMatrix) {
     chartAdded = true;
     chartButton.style.display = "block";
 
-    var chart = document.getElementById('chart_div');
+    var chart = document.getElementById('chart');
     chart.style.display = "block";
 
     countryAdded = true;
@@ -472,7 +442,7 @@ function drawChart(dataMatrix) {
         }
     };
 
-    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    var chart = new google.visualization.LineChart(document.getElementById('chart'));
 
     var formatter = new google.visualization.NumberFormat({
         pattern: '#,##0.00',
