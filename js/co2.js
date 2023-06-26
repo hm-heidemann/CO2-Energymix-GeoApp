@@ -84,17 +84,25 @@ function updateYearSlider() {
     }
 }
 
+function updateYearDisplay() {
+    if (map.hasLayer(co2EmissionsLayer)) {
+        document.getElementById('cardHeader').textContent = "CO2 Emissionen im Jahr " + selectedYear;
+    } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
+        document.getElementById('cardHeader').textContent = "CO2 Emissionen pro Kopf im Jahr " + selectedYear;
+    }
+}
+
 yearSlider.addEventListener('input', function(e) {
     selectedYear = parseInt(e.target.value);
+    
+    updateYearDisplay();
 
     if (map.hasLayer(co2EmissionsLayer)) {
-        document.getElementById('yearDisplay').textContent = "CO2 Emissionen im Jahr " + selectedYear;
         co2EmissionsLayer.setStyle(totalCo2Style);
         co2EmissionsLayer.eachLayer(function (layer) {
             onEachFeature(layer.feature, layer);
         });
     } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
-        document.getElementById('yearDisplay').textContent = "CO2 Emissionen pro Kopf im Jahr " + selectedYear;
         co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
         co2EmissionsPerCapitaLayer.eachLayer(function (layer) {
             onEachFeaturePerCap(layer.feature, layer);
@@ -426,11 +434,13 @@ map.on('overlayadd', function(e) {
     clearChart();
     updateYearSlider();
     updateLegend();   
+    updateYearDisplay();
 });
 map.on('overlayremove', function(e) {
     clearChart();
     updateYearSlider();
     updateLegend();
+    updateYearDisplay();
 });
 
 updateLegend();
