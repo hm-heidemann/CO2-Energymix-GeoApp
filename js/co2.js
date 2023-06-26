@@ -83,11 +83,13 @@ yearSlider.addEventListener('input', function(e) {
     if (map.hasLayer(co2EmissionsLayer)) {
         co2EmissionsLayer.setStyle(totalCo2Style);
         co2EmissionsLayer.eachLayer(function (layer) {
+            layer.off('click');
             onEachFeature(layer.feature, layer);
         });
     } else if (map.hasLayer(co2EmissionsPerCapitaLayer)) {
         co2EmissionsPerCapitaLayer.setStyle(totalCo2StylePerCapita);
         co2EmissionsPerCapitaLayer.eachLayer(function (layer) {
+            layer.off('click');
             onEachFeaturePerCap(layer.feature, layer);
         });
     }
