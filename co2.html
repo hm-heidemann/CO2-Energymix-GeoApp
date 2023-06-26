@@ -45,13 +45,15 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <h5 id="yearDisplay">CO2 Emissionen im Jahr 2021</h5>
                             <div class="d-flex align-items-center">
-                                <button id="addCountryBtn" class="btn btn-primary mr-2">+</button>
+                                <h5 id="yearDisplay">CO2 Emissionen im Jahr 2021</h5>
+                                <button id="addCountryBtn" class="btn btn-primary mr-2" style="margin-left: 30px;">Land hinzufügen</button>
+                            </div>
+                            <div class="d-flex align-items-center">
                                 <div class="slider d-flex align-items-center">
                                     <span id="minYearCo2">${minYearCo2}</span>
                                     <input type="range" min="${minYearCo2}" max="${maxYearCo2}" value="${minYearCo2}" id="yearSlider">
-                                    <span id="maxYearCo2">${maxYearCo2}</span>
+                                    <span id="maxYearCo2" style="margin-right: 50px;">${maxYearCo2}</span>
                                 </div>
                             </div> 
                         </div>
