@@ -151,6 +151,7 @@ yearPicker.addEventListener('change', function(e) {
     removePieCharts();
 
     energyLayer.eachLayer(function (layer) {
+        layer.off('click');
         onEachFeature(layer.feature, layer);
     });
 });
