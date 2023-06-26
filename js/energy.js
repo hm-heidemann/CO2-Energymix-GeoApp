@@ -33,15 +33,15 @@ var chart = document.getElementById('chart');
 clearChartButton.style.display = "none";
 addCountryBtn.style.display = "none";
 
-clearChartButton.addEventListener('click', function() {
+function clearChart() {
     chartAdded = false;
     clearChartButton.style.display = "none";
-
     chart.style.display = "none";
-
     countryAdded = false;
     addCountryBtn.style.display = "none";
-});
+}
+
+clearChartButton.addEventListener('click', clearChart);
 
 
 togglePieChartsButton.addEventListener('click', function() {
@@ -147,6 +147,7 @@ yearPicker.addEventListener('change', function(e) {
     selectedYear = parseInt(e.target.value);
     document.getElementById('yearDisplay').textContent = "Energiemix im Jahr  " + selectedYear;
 
+    clearChart();
     removePieCharts();
 
     energyLayer.eachLayer(function (layer) {
