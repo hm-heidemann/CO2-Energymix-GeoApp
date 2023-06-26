@@ -300,12 +300,12 @@ function onEachFeature(feature, layer) {
         var yearIndex = year_arr.indexOf(selectedYear);
         if (yearIndex > -1) {
             var co2DataForYear = annual_co2_arr[yearIndex];
-            layer.bindPopup('<pre>CO2 Emissionen für ' + selectedYear + ': ' + co2DataForYear/1000000 + ' Mio. t </pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>CO2 Emissionen für ' + selectedYear + ': ' + co2DataForYear/1000000 + ' Mio. t </pre>');
         } else {
-            layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>Keine CO2 Daten für ' + selectedYear + '</pre>');
         }
     } else {
-        layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+        layer.bindPopup('<pre>Keine CO2 Daten für ' + selectedYear + '</pre>');
     }
 }
 
@@ -327,12 +327,12 @@ function onEachFeaturePerCap(feature, layer) {
         var yearIndex = year_arr.indexOf(selectedYear);
         if (yearIndex > -1) {
             var co2DataForYear = annual_co2_pc_arr[yearIndex];
-            layer.bindPopup('<pre>CO2 Emissionen pro Kopf für ' + selectedYear + ': ' + co2DataForYear + ' t </pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>CO2 Emissionen pro Kopf für ' + selectedYear + ': ' + co2DataForYear + ' t </pre>');
         } else {
-            layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+            layer.bindPopup('<pre><b>' + feature.properties.name_de + '</b><br><br>Keine CO2 Daten für ' + selectedYear + '</pre>');
         }
     } else {
-        layer.bindPopup('<pre>' + JSON.stringify(feature.properties, null, ' ').replace(/[\{\}"]/g, '') + '</pre>');
+        layer.bindPopup('<pre>Keine CO2 Daten für ' + selectedYear + '</pre>');
     }
 }
 
