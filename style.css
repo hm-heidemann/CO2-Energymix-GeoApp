@@ -14,8 +14,8 @@
 }
 
 .map {
-    flex: 0.7;
-    height: 70vh; 
+    flex: 0.6;
+    height: 75vh; 
 }
 
 .yearPickerContainer {
@@ -27,8 +27,8 @@
 }
 
 .chart {
-    flex: 0.3;
-    height: 70vh;
+    flex: 0.4;
+    height: 75vh;
 }
 
 .slider {
