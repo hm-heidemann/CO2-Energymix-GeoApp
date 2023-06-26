@@ -190,10 +190,7 @@ function drawChart() {
     var data = google.visualization.arrayToDataTable(countryData);
 
     var options = {
-        chart: {
-            title: 'Energiemix',
-            subtitle: 'Aufteilung der Energiequellen',
-        },
+        title: 'Energiemix im Jahr ' + selectedYear,
         legend: { position: 'bottom' },
         hAxis: {title: 'Prozentsatz'},
         vAxis: {title: 'Energieträger', format: 'decimal'},
