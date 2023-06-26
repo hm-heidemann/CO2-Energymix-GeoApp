@@ -1,14 +1,10 @@
-// TODO
-// Simple Layer hinzufügen
-// Button "Hide pie charts"
+var currentLayerType = 'detailed';  
 
 var chartAdded = false;
 var pieChartsVisible = true;
 
 var minYearEnergy = Number.MAX_SAFE_INTEGER;
 var maxYearEnergy = 0;
-
-var maxCo2 = 0;
 
 var selectedYear = 2021;
 var labels = ['Kohle', 'Gas', 'Öl', 'Nuklear', 'Hydro', 'Solar', 'Wind'];
@@ -21,6 +17,12 @@ var colors = {
     'Solar': '#FFFF00',
     'Wind': '#ADD8E6'
 }; 
+var simpleLabels = ['Erneuerbar', 'Fossil', 'Low Carbon'];
+var simpleColors = {
+    'Erneuerbar': '#4CAF50', 
+    'Fossil': '#9E9E9E', 
+    'Low Carbon': '#FFC107',
+}
 
 var addCountry = false;
 var countryData = [['Energiequelle']];
@@ -75,6 +77,18 @@ var energyLayer = new L.GeoJSON(null, {
     onEachFeature: onEachFeature
 });
 
+var simpleEnergyLayer = new L.GeoJSON(null, {
+    style: function(feature) {
+        return {
+            fillColor: 'transparent',
+            color: '#000',
+            weight: 2,
+            opacity: 1, 
+        };
+    },
+    onEachFeature: onEachFeatureSimple
+});
+
 googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
     maxZoom: 20,
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
@@ -119,6 +133,25 @@ $.ajax({
     success: handleEnergyJson
 });
 
+$.ajax({
+    url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
+    data: {
+        version: '1.0.0',
+        request: 'GetFeature',
+        service: 'WFS',
+        typeName: 'heidemann:world_energy_share_simple',
+        maxFeatures: '2000',
+        outputFormat: 'application/json'
+    },
+    dataType: 'json',
+    jsonpCallback: 'getJson',
+    success: handleSimpleEnergyJson
+});
+
+function handleSimpleEnergyJson(data) {
+    simpleEnergyLayer.addData(data);
+}    
+
 function handleEnergyJson(data) {
     energyLayer.addData(data);
     for (var feature of data.features) {
@@ -145,7 +178,13 @@ function handleEnergyJson(data) {
 
 yearPicker.addEventListener('change', function(e) {
     selectedYear = parseInt(e.target.value);
-    document.getElementById('yearDisplay').textContent = "Energiemix im Jahr  " + selectedYear;
+    var title = "" 
+    if (currentLayerType === 'detailed') title = "Energiemix im Jahr " 
+    else title = "Energiemix (vereinfacht) im Jahr "
+    document.getElementById('yearDisplay').textContent = title + selectedYear;
+
+    togglePieChartsButton.textContent = "Kreisdiagramme ausblenden";
+    togglePieChartsButton.classList.add('button-active');
 
     clearChart();
     removePieCharts();
@@ -177,6 +216,23 @@ function removePieCharts() {
     pieCharts = [];
 }
 
+function updatePieCharts() {
+    removePieCharts();
+
+    if (currentLayerType === 'simple') {
+        simpleEnergyLayer.eachLayer(function (layer) {
+            layer.off('click');
+            onEachFeatureSimple(layer.feature, layer);
+        });
+    } else if (currentLayerType === 'detailed') {
+        energyLayer.eachLayer(function (layer) {
+            layer.off('click');
+            onEachFeature(layer.feature, layer);
+        });
+    }
+}
+
+
 document.getElementById('addCountryBtn').addEventListener('click', function() {
     addCountryBtn.classList.add('button-active');
     addCountry = true;
@@ -193,7 +249,13 @@ function drawChart() {
     var options = {
         title: 'Energiemix im Jahr ' + selectedYear,
         legend: { position: 'bottom' },
-        hAxis: {title: 'Prozentsatz'},
+        hAxis: {
+            title: 'Prozentsatz',
+            viewWindow: {
+                min: 0,
+                max: 100
+            }
+        },
         vAxis: {title: 'Energieträger', format: 'decimal'},
     };
 
@@ -304,8 +366,104 @@ function onEachFeature(feature, layer) {
     layer.bindPopup(popupContent);
 }
 
-
 map.addLayer(energyLayer);
+
+function onEachFeatureSimple(feature, layer) {
+    var name = feature.properties.name_de;
+    var center_lon = feature.properties.center_lon;
+    var center_lat = feature.properties.center_lat;
+
+    var year_f = feature.properties.year_f ? JSON.parse(feature.properties.year_f) : null;
+    var year_r = feature.properties.year_r ? JSON.parse(feature.properties.year_r) : null;
+    var year_l = feature.properties.year_l ? JSON.parse(feature.properties.year_l) : null;
+
+    var fossil = feature.properties.fossil ? JSON.parse(feature.properties.fossil) : null;
+    var renewables = feature.properties.renewables ? JSON.parse(feature.properties.renewables) : null;
+    var lowcarb = feature.properties.lowcarb ? JSON.parse(feature.properties.lowcarb) : null;
+
+    var fossilIndex = year_f ? year_f.indexOf(selectedYear) : -1;
+    var renewablesIndex = year_r ? year_r.indexOf(selectedYear) : -1;
+    var lowcarbIndex = year_l ? year_l.indexOf(selectedYear) : -1;
+
+    var pieData = [];
+    var barData = [];
+    var pieLabels = [];
+    var barLabels = [];
+    var bgColors = [];
+
+    let energyTypes = [
+        {name: 'Erneuerbar', data: renewables, index: renewablesIndex},
+        {name: 'Fossil', data: fossil, index: fossilIndex}, 
+        {name: 'Low Carb', data: lowcarb, index: lowcarbIndex}
+    ];
+    
+    let dataCount = 0;
+    
+    for (let energy of energyTypes) {
+        if (energy.index >= 0 && energy.data[energy.index]) {
+            barData.push(energy.data[energy.index]);
+            barLabels.push(energy.name);
+    
+            if (energy.name !== 'Low Carb') {
+                pieData.push(energy.data[energy.index]);
+                pieLabels.push(energy.name);
+                bgColors.push(simpleColors[energy.name]);
+            }
+            dataCount++;
+        } else {
+            barData.push(0);
+            if (energy.name !== 'Low Carb') {
+                pieData.push(0);
+            }
+        }
+    }
+    
+    if (dataCount === 3) {
+        var area = turf.area(layer.feature);
+        var diameter = getDiameter(area);
+        var pieOptions = {
+            type: 'pie',
+            width: diameter, height: diameter,
+            data: pieData.map(val => parseFloat(val.toFixed(2))),
+            colors: bgColors
+        };   
+                
+        var center = {'lat': center_lat, 'lon': center_lon};
+        var pieChart = L.minichart(center, pieOptions);
+        pieCharts.push(pieChart);
+        map.addLayer(pieChart); 
+    }    
+
+    layer.on('click', function() {
+        if (barData.length > 0) {
+            if (addCountry) {
+                countryData[0].push(name);
+                for (let i = 0; i < simpleLabels.length; i++) {
+                    if (countryData[i + 1]) {
+                        countryData[i + 1].push(barData[i]);
+                    } else {
+                        countryData.push([barLabels[i], barData[i]]);
+                    }
+                }
+                addCountryBtn.classList.remove('button-active');
+                addCountry = false;
+            } else {
+                countryData = [['Energiequelle', name]];
+                for (let i = 0; i < barLabels.length; i++) {
+                    countryData.push([barLabels[i], barData[i]]);
+                }
+            }
+    
+            drawChart();
+        }
+    });
+
+    var popupContent = `
+        <strong>${name}</strong><br/>
+        ${barLabels.map((label, index) => `${label}: ${parseFloat(barData[index].toFixed(2))}%`).join('<br/>')}
+    `;
+    layer.bindPopup(popupContent);
+}
 
 var baseMaps = {
     "Google Satellit": googleSat,
@@ -315,6 +473,7 @@ var baseMaps = {
 
 var overlayMaps = {
     "Energiemix": energyLayer, 
+    "Energiemix vereinfacht": simpleEnergyLayer
 };
 
 L.control.layers(baseMaps, overlayMaps).addTo(map);
@@ -323,13 +482,72 @@ var legend = L.control({position: 'bottomright'});
 
 legend.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'info legend');
-    labels.forEach((label) => {
-        div.innerHTML += 
-        '<i style="background:' + colors[label] + '"></i> ' +
-        (label ? label + '<br>' : '+');
-    });
-
     return div;
 };
 
 legend.addTo(map);
+
+function getSimpleLegend() {
+    var result = '';
+    var simpleLabels = ['Erneuerbar', 'Fossil'];
+    simpleLabels.forEach(label => {
+        result += '<i style="background:' + simpleColors[label] + '"></i> ' +
+            label + '<br>';
+    });
+    return result;
+}
+
+function getDetailedLegend() {
+    var result = '';
+    labels.forEach((label) => {
+        result += 
+        '<i style="background:' + colors[label] + '"></i> ' +
+        (label ? label + '<br>' : '+');
+    });
+    return result;
+}
+
+function updateLegend() {
+    var div = legend.getContainer();
+    div.innerHTML = '';
+
+    if (map.hasLayer(energyLayer)) {
+        div.innerHTML = getDetailedLegend();
+    } else if (map.hasLayer(simpleEnergyLayer)) {
+        div.innerHTML = getSimpleLegend();
+    }
+}
+
+
+function updateCardTitle() {
+    var title = "" 
+    if (currentLayerType == 'detailed') title = "Energiemix im Jahr " 
+    else title = "Energiemix (vereinfacht) im Jahr "
+    document.getElementById('yearDisplay').textContent = title + selectedYear;
+}
+
+map.on('overlayadd', function(e) {
+    if (map.hasLayer(energyLayer)) {
+        currentLayerType = 'detailed';
+    } else if (map.hasLayer(simpleEnergyLayer)) {
+        currentLayerType = 'simple';
+    }
+    clearChart();
+    updatePieCharts();
+    updateCardTitle();
+    updateLegend();
+});
+map.on('overlayremove', function(e) {
+    if (map.hasLayer(energyLayer)) {
+        currentLayerType = 'detailed';
+    } else if (map.hasLayer(simpleEnergyLayer)) {
+        currentLayerType = 'simple';
+    }
+    clearChart();
+    updatePieCharts();
+    updateCardTitle();
+    updateLegend();
+});
+
+updateLegend();
+
