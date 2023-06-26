@@ -3,6 +3,8 @@
 // clear chart when changing layer
 
 var addCountryMode = false;
+var countryAdded = false;
+var chartAdded = false;
 
 var minYearCo2 = Number.MAX_SAFE_INTEGER;
 var maxYearCo2 = 2021;
@@ -23,6 +25,10 @@ colorRamp = chroma.scale('OrRd').classes(grades_arr_co2.length);
 colorRampPerCapita = chroma.scale('OrRd').classes(grades_arr_co2_pc.length);
 
 var addCountryBtn = document.getElementById('addCountryBtn');
+addCountryBtn.style.display = countryAdded ? "block" : "none";
+
+var chartButton = document.getElementById('clearChartBtn');
+chartButton.style.display = chartAdded ? "block" : "none";
 
 var co2EmissionsLayer = new L.GeoJSON(null, {onEachFeature: onEachFeature});
 var co2EmissionsPerCapitaLayer = new L.GeoJSON(null, {onEachFeature: onEachFeaturePerCap});
@@ -400,31 +406,45 @@ function updateLegend() {
 
             div.innerHTML +=
                 '<i style="background:' + getCo2ColorPerCapita(from + 1) + '"t></i> ' +
-                from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : '+');
+                from + (i < grades_arr_co2_pc.length - 2 ? 't &ndash; ' + to + 't <br>' : 't+');
         }
     }
 }
 
+function clearChart() {
+    chartAdded = false;
+    chartButton.style.display = "none";
+
+    var chart = document.getElementById('chart_div');
+    chart.style.display = "none";
+
+    countryAdded = false;
+    addCountryBtn.style.display = "none";
+}
+
 map.on('overlayadd', function(e) {
+    clearChart();
     updateYearSlider();
-    updateLegend();
-    dataMatrix = [['Jahr']];
-    if(dataMatrix[0].length > 1) {
-        drawChart(dataMatrix);
-    }    
+    updateLegend();   
 });
 map.on('overlayremove', function(e) {
+    clearChart();
     updateYearSlider();
     updateLegend();
-    dataMatrix = [['Jahr']];
-    if(dataMatrix[0].length > 1) {
-        drawChart(dataMatrix);
-    }
 });
 
 updateLegend();
 
 function drawChart(dataMatrix) {
+    chartAdded = true;
+    chartButton.style.display = "block";
+
+    var chart = document.getElementById('chart_div');
+    chart.style.display = "block";
+
+    countryAdded = true;
+    addCountryBtn.style.display = "block";
+
     var data = google.visualization.arrayToDataTable(dataMatrix);
 
     var options = {
@@ -436,7 +456,7 @@ function drawChart(dataMatrix) {
             format: '0'
         },
         vAxis: {
-            title: 'Emissionen',
+            title: 'Emissionen in Tonnen',
             viewWindow: { min: 0 },
             format: 'short'
         }
@@ -455,17 +475,19 @@ function drawChart(dataMatrix) {
     google.visualization.events.addListener(chart, 'ready', function () {
         var labels = chart.getContainer().getElementsByTagName('text');
         Array.prototype.forEach.call(labels, function(label) {
-            if (label.textContent.indexOf('K') > -1) {
-                label.textContent = label.textContent.replace('K', 'Tsd');
-            }
-            if (label.textContent.indexOf('M') > -1) {
-                label.textContent = label.textContent.replace('M', 'Mio');
-            }
-            if (label.textContent.indexOf('B') > -1) {
-                label.textContent = label.textContent.replace('B', 'Mrd');
+            if (/\d/.test(label.textContent)) {
+                if (label.textContent.indexOf('K') > -1) {
+                    label.textContent = label.textContent.replace('K', ' Tsd');
+                }
+                if (label.textContent.indexOf('M') > -1) {
+                    label.textContent = label.textContent.replace('M', ' Mio');
+                }
+                if (label.textContent.indexOf('B') > -1) {
+                    label.textContent = label.textContent.replace('B', ' Mrd');
+                }
             }
         });
-    });
+    });    
 
     chart.draw(data, options);
 }
