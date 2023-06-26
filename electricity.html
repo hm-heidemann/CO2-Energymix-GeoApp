@@ -2,7 +2,7 @@
 <html>
     <head>
 
-        <title>CO2-Ausstoß</title>
+        <title>Energiemix</title>
 
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +18,13 @@
 
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.2/dist/leaflet.css" media="screen" title="leaflet">
+        <script src="https://unpkg.com/leaflet@1.0.2/dist/leaflet.js" charset="utf-8"></script>
+        <script src="https://unpkg.com/leaflet.minichart/dist/leaflet.minichart.min.js" charset="utf-8"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.3.0/turf.min.js" crossorigin="anonymous"></script>
+
         <link rel="stylesheet" href="style.css">
         
     </head>
@@ -32,32 +39,31 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" href="co2.html">CO2-Ausstoß</a>
+                        <a class="nav-link" href="co2.html">CO2-Ausstoß</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="energy.html">Energiemix</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="electricity.html">Elektrizitätsmix</a>
+                        <a class="nav-link active" href="electricity.html">Elektrizitätsmix</a>
                     </li>
                 </ul>
             </div>
-        </nav>    
+        </nav>
         <div class="container-fluid"> 
             <div class="row">
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <h5 id="cardHeader">CO2 Emissionen im Jahr 2021</h5>
-                                <button id="addCountryBtn" class="btn btn-primary mr-2" style="margin-left: 30px;">Land hinzufügen</button>
-                                <button id="clearChartBtn" class="btn btn-primary" style="margin-left: 10px;" onclick="clearChart()">Diagramm aufräumen</button>
+                                <h5 id="yearDisplay">Elektrizitätsmix im Jahr 2022</h5>
+                                <button id="togglePieCharts" class="btn btn-primary button-active mr-2" style="margin-left: 30px;">Kreisdiagramme ausblenden</button>
+                                <button id="addCountryBtn" class="btn btn-primary mr-2" style="margin-left: 10px;">Land hinzufügen</button>
+                                <button id="clearChartBtn" class="btn btn-primary mr-2" style="margin-left: 10px;">Diagramm aufräumen</button>
                             </div>
                             <div class="d-flex align-items-center">
-                                <div class="slider d-flex align-items-center">
-                                    <span id="minYear">${minYear}</span>
-                                    <input type="range" min="${minYear}" max="${maxYear}" value="${minYear}" id="yearSlider">
-                                    <span id="maxYear" style="margin-right: 50px;">${maxYearCo2}</span>
+                                <div class="yearPickerContainer">
+                                    <select id="yearPicker"></select>
                                 </div>
                             </div> 
                         </div>
@@ -74,9 +80,9 @@
                     </div>
                 </div>
             </div>
-        </div>                
+        </div>            
 
-        <script src="js/co2.js"></script>    
+        <script src="js/electricity.js"></script>
    
     </body>
 </html>
