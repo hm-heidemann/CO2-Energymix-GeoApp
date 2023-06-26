@@ -2,6 +2,8 @@
 // Simple Layer hinzufügen
 // Button "Hide pie charts"
 
+var pieChartsVisible = true;
+
 var minYearEnergy = Number.MAX_SAFE_INTEGER;
 var maxYearEnergy = 0;
 
@@ -23,6 +25,24 @@ var addCountry = false;
 var countryData = [['Energiequelle']];
 
 var addCountryBtn = document.getElementById('addCountryBtn');
+var togglePieChartsButton = document.getElementById('togglePieCharts');
+
+togglePieChartsButton.addEventListener('click', function() {
+    if (pieChartsVisible) {
+        for (var i = 0; i < pieCharts.length; i++) {
+            map.removeLayer(pieCharts[i]);
+        }
+        togglePieChartsButton.textContent = "Kreisdiagramme einblenden";
+        togglePieChartsButton.classList.remove('button-active');
+    } else {
+        for (var i = 0; i < pieCharts.length; i++) {
+            map.addLayer(pieCharts[i]);
+        }
+        togglePieChartsButton.textContent = "Kreisdiagramme ausblenden";
+        togglePieChartsButton.classList.add('button-active');
+    }
+    pieChartsVisible = !pieChartsVisible;
+});
 
 google.charts.load('current', {'packages':['corechart']});
 
