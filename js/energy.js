@@ -2,6 +2,7 @@
 // Simple Layer hinzufügen
 // Button "Hide pie charts"
 
+var chartAdded = false;
 var pieChartsVisible = true;
 
 var minYearEnergy = Number.MAX_SAFE_INTEGER;
@@ -24,8 +25,24 @@ var colors = {
 var addCountry = false;
 var countryData = [['Energiequelle']];
 
-var addCountryBtn = document.getElementById('addCountryBtn');
 var togglePieChartsButton = document.getElementById('togglePieCharts');
+var addCountryBtn = document.getElementById('addCountryBtn');
+var clearChartButton = document.getElementById('clearChartBtn');
+var chart = document.getElementById('chart');
+
+clearChartButton.style.display = "none";
+addCountryBtn.style.display = "none";
+
+clearChartButton.addEventListener('click', function() {
+    chartAdded = false;
+    clearChartButton.style.display = "none";
+
+    chart.style.display = "none";
+
+    countryAdded = false;
+    addCountryBtn.style.display = "none";
+});
+
 
 togglePieChartsButton.addEventListener('click', function() {
     if (pieChartsVisible) {
@@ -164,6 +181,11 @@ document.getElementById('addCountryBtn').addEventListener('click', function() {
 });
 
 function drawChart() {
+    var chart = document.getElementById('chart')
+    chart.style.display = "block"; 
+    clearChartButton.style.display = "block";
+    addCountryBtn.style.display = "block";  
+    
     var data = google.visualization.arrayToDataTable(countryData);
 
     var options = {
@@ -176,7 +198,7 @@ function drawChart() {
         vAxis: {title: 'Energieträger', format: 'decimal'},
     };
 
-    var chart = new google.visualization.BarChart(document.getElementById('chart_div'));
+    var chart = new google.visualization.BarChart(chart);
 
     chart.draw(data, options);
 }
