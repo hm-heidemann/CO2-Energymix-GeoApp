@@ -112,7 +112,7 @@ $.ajax({
     dataType: 'json',
     jsonpCallback: 'getJson',
     success: handleCo2Json
-    });
+});
 
 $.ajax({
     url: 'http://10.152.57.134:8080/geoserver/heidemann/ows',
