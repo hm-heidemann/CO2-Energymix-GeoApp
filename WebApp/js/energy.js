@@ -241,11 +241,13 @@ function updatePieCharts() {
         simpleElectricityLayer.eachLayer(function (layer) {
             layer.off('click');
             onEachFeatureSimple(layer.feature, layer);
+            layer.on('click');
         });
     } else if (currentLayerType === 'detailed') {
         electricityLayer.eachLayer(function (layer) {
             layer.off('click');
             onEachFeature(layer.feature, layer);
+            layer.on('click');
         });
     }
 }
