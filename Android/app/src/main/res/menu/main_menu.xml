@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_co2_total"
+        android:title="CO2 gesamt"/>
+    <item
+        android:id="@+id/action_co2_per_capita"
+        android:title="CO2 pro Kopf"/>
+    <item
+        android:id="@+id/action_energy_mix"
+        android:title="Energiemix"/>
+    <item
+        android:id="@+id/action_electricity_mix"
+        android:title="Electrizitätsmix"/>
+</menu>

@@ -5,31 +5,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Context;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.kml.ColorStyle;
-import org.osmdroid.bonuspack.kml.KmlDocument;
-import org.osmdroid.bonuspack.kml.LineStyle;
-import org.osmdroid.bonuspack.kml.Style;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.FolderOverlay;
 
-import android.graphics.Bitmap;
-import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
-import com.google.gson.Gson;
-
-import java.lang.reflect.Type;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
   private MapView map;
+  private final Executor executor = Executors.newSingleThreadExecutor();
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -48,31 +48,99 @@ public class MainActivity extends AppCompatActivity {
     GeoPoint startPoint = new GeoPoint(48.8583, 2.2944);
     mapController.setCenter(startPoint);
 
-    FetchDataAsyncTask fetchDataTask = new FetchDataAsyncTask();
-    fetchDataTask.execute();
+    getData();
+
   }
 
-  private class FetchDataAsyncTask extends AsyncTask<Void, Void, KmlDocument> {
-
-    @Override
-    protected KmlDocument doInBackground(Void... voids) {
-      KmlDocument kmlDocument = new KmlDocument();
-      boolean success = kmlDocument.parseKMLUrl("http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3Aworld_co2_emissions&maxFeatures=1000000&outputFormat=application%2Fvnd.google-earth.kml%2Bxml");
-      if (!success) {
-        Log.d("FetchData", "Failed to load KML");
-        return null;
-      }
-      return kmlDocument;
-    }
-
-    @Override
-    protected void onPostExecute(KmlDocument kmlDocument) {
-      if (kmlDocument != null) {
-        FolderOverlay kmlOverlay = (FolderOverlay) kmlDocument.mKmlRoot.buildOverlay(map, null, null, kmlDocument);
-
-        map.getOverlays().add(kmlOverlay);
-        map.invalidate();
-      }
-    }
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.main_menu, menu);
+    return true;
   }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    // Handle action bar item clicks here.
+    int id = item.getItemId();
+
+    if (id == R.id.action_co2_total) {
+      // Laden Sie die Daten für den CO2-Gesamtlayer
+      return true;
+    } else if (id == R.id.action_co2_per_capita) {
+      // Laden Sie die Daten für den CO2-pro-Kopf-Layer
+      return true;
+    } else if (id == R.id.action_energy_mix) {
+      // Laden Sie die Daten für den Energiemix-Layer
+      return true;
+    } else if (id == R.id.action_electricity_mix) {
+      // Laden Sie die Daten für den Elektrizitätsmix-Layer
+      return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+  }
+
+  public void getData() {
+    String url = "http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3Aworld_co2_emissions&maxFeatures=1000000&outputFormat=application%2Fjson";
+    executor.execute(new Runnable() {
+      @Override
+      public void run() {
+        String response = performApiRequest(url);
+        if (response != null) {
+          runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              Log.d("Tag:", "CONNECTED");
+              try {
+                handleJSONResponse(response);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private String performApiRequest(String urlString) {
+    try {
+      URL url = new URL(urlString);
+      HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+      connection.setRequestMethod("GET");
+      connection.setConnectTimeout(5000);
+      connection.setReadTimeout(5000);
+
+      int responseCode = connection.getResponseCode();
+      if (responseCode == HttpURLConnection.HTTP_OK) {
+        InputStream inputStream = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder stringBuilder = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+          stringBuilder.append(line);
+        }
+        reader.close();
+        return stringBuilder.toString();
+      } else {
+        Log.e("Tag:", "API Request failed with response code: " + responseCode);
+      }
+
+      connection.disconnect();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  private void handleJSONResponse(String jsonString) throws IOException {
+    // Write the json response to a file
+    File outputFile = new File(getCacheDir(), "response.json");
+    FileWriter writer = new FileWriter(outputFile);
+    writer.write(jsonString);
+    writer.close();
+
+    Log.d("Tag:", "JSON response written to " + outputFile.getAbsolutePath());
+  }
+
 }
