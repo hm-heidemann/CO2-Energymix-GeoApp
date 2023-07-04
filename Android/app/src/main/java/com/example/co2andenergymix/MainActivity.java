@@ -1,24 +1,27 @@
 package com.example.co2andenergymix;
 
+import static com.example.co2andenergymix.helper.drawPolygons.handleCO2JSONResponse;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
-
-import org.osmdroid.api.IMapController;
-import org.osmdroid.config.Configuration;
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.MapView;
-
-import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
+
+import org.json.JSONException;
+import org.osmdroid.api.IMapController;
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+
+import android.os.Bundle;
+import android.preference.PreferenceManager;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -29,6 +32,8 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
   private MapView map;
+  private ProgressBar loadingIndic;
+  private View darkOverlay;
   private final Executor executor = Executors.newSingleThreadExecutor();
 
   @Override
@@ -49,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
     mapController.setCenter(startPoint);
 
     getData();
-
   }
 
   @Override
@@ -92,9 +96,9 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
               Log.d("Tag:", "CONNECTED");
               try {
-                handleJSONResponse(response);
-              } catch (IOException e) {
-                throw new RuntimeException(e);
+                handleCO2JSONResponse("2021", response, map);
+              } catch (JSONException e) {
+                e.printStackTrace();
               }
             }
           });
@@ -131,16 +135,6 @@ public class MainActivity extends AppCompatActivity {
       e.printStackTrace();
     }
     return null;
-  }
-
-  private void handleJSONResponse(String jsonString) throws IOException {
-    // Write the json response to a file
-    File outputFile = new File(getCacheDir(), "response.json");
-    FileWriter writer = new FileWriter(outputFile);
-    writer.write(jsonString);
-    writer.close();
-
-    Log.d("Tag:", "JSON response written to " + outputFile.getAbsolutePath());
   }
 
 }
