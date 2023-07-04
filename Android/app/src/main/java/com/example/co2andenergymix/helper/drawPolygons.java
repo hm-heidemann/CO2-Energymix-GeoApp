@@ -58,14 +58,14 @@ public class drawPolygons {
             String type = geometry.getString("type");
             JSONArray coordinates = geometry.getJSONArray("coordinates");
 
-            int co2Value = -1;
+            long co2Value = -1;
             if (!properties.isNull("year") && !properties.isNull("annual_co2")) {
               JSONArray yearValues = new JSONArray(properties.getString("year"));
               JSONArray co2Values = new JSONArray(properties.getString("annual_co2"));
 
               for (int j = 0; j < yearValues.length(); j++) {
                 if (yearValues.getString(j).equals(year)) {
-                  co2Value = co2Values.getInt(j);
+                  co2Value = co2Values.getLong(j);
                   break;
                 }
               }
@@ -91,9 +91,6 @@ public class drawPolygons {
 
                 geoPointsList.add(geoPoints);
               }
-
-              if (name_de.equals("Indien")) Log.d("PARSE", "" + co2Value);
-              if (name_de.equals("China")) Log.d("PARSE", "" + co2Value);
 
               final int color;
               int idx;
