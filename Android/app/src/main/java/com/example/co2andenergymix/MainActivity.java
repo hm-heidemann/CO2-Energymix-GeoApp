@@ -1,6 +1,7 @@
 package com.example.co2andenergymix;
 
 import static com.example.co2andenergymix.helper.drawPolygons.handleCO2JSONResponse;
+import static com.example.co2andenergymix.helper.drawPolygons.handleCO2PerCapitaJSONResponse;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,6 +19,8 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+
+import com.example.co2andenergymix.enums.DataType;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,11 +54,11 @@ public class MainActivity extends AppCompatActivity {
     map.setMultiTouchControls(true);
 
     IMapController mapController = map.getController();
-    mapController.setZoom(9.5);
-    GeoPoint startPoint = new GeoPoint(48.8583, 2.2944);
+    mapController.setZoom(3);
+    GeoPoint startPoint = new GeoPoint(0, 0);
     mapController.setCenter(startPoint);
 
-    getData(URL_BASE + CO2_REQUEST);
+    getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL);
   }
 
   @Override
@@ -69,23 +72,23 @@ public class MainActivity extends AppCompatActivity {
     int id = item.getItemId();
 
     if (id == R.id.action_co2_total) {
-      getData(URL_BASE + CO2_REQUEST);
+      getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL);
       return true;
     } else if (id == R.id.action_co2_per_capita) {
-      getData(URL_BASE + CO2_PER_CAP_REQUEST);
+      getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA);
       return true;
     } else if (id == R.id.action_energy_mix) {
-      getData(URL_BASE + ENERGY_REQUEST);
+      getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX);
       return true;
     } else if (id == R.id.action_electricity_mix) {
-      getData(URL_BASE + ELECTRICITY_REQUEST);
+      getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX);
       return true;
     }
 
     return super.onOptionsItemSelected(item);
   }
 
-  public void getData(String url) {
+  public void getData(String url, DataType dataType) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
@@ -97,7 +100,20 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
               Log.d("SERVER:", "CONNECTED");
               try {
-                handleCO2JSONResponse("2021", response, map);
+                switch(dataType) {
+                  case CO2_TOTAL:
+                    handleCO2JSONResponse("2021", response, map);
+                    break;
+                  case CO2_PER_CAPITA:
+                    handleCO2PerCapitaJSONResponse("2021", response, map);
+                    break;
+                  case ENERGY_MIX:
+                    // call handleEnergyMixJSONResponse function
+                    break;
+                  case ELECTRICITY_MIX:
+                    // call handleElectricityMixJSONResponse function
+                    break;
+                }
               } catch (JSONException e) {
                 e.printStackTrace();
               }
@@ -128,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         reader.close();
         return stringBuilder.toString();
       } else {
-        Log.e("Tag:", "API Request failed with response code: " + responseCode);
+        Log.e("SERVER:", "API Request failed with response code: " + responseCode);
       }
 
       connection.disconnect();
