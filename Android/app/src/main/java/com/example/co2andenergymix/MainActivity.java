@@ -8,8 +8,6 @@ import android.content.Context;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.ProgressBar;
 
 import org.json.JSONException;
 import org.osmdroid.api.IMapController;
@@ -32,9 +30,13 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
   private MapView map;
-  private ProgressBar loadingIndic;
-  private View darkOverlay;
   private final Executor executor = Executors.newSingleThreadExecutor();
+
+  private static final String URL_BASE = "http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3A";
+  private static final String CO2_REQUEST = "world_co2_emissions&maxFeatures=1000000&outputFormat=application%2Fjson";
+  private static final String CO2_PER_CAP_REQUEST = "world_co2_emissions_pc&maxFeatures=1000000&outputFormat=application%2Fjson";
+  private static final String ENERGY_REQUEST = "world_energy_share&maxFeatures=1000000&outputFormat=application%2Fjson";
+  private static final String ELECTRICITY_REQUEST = "world_electricity_share&maxFeatures=1000000&outputFormat=application%2Fjson";
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -53,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     GeoPoint startPoint = new GeoPoint(48.8583, 2.2944);
     mapController.setCenter(startPoint);
 
-    getData();
+    getData(URL_BASE + CO2_REQUEST);
   }
 
   @Override
@@ -64,37 +66,36 @@ public class MainActivity extends AppCompatActivity {
 
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
-    // Handle action bar item clicks here.
     int id = item.getItemId();
 
     if (id == R.id.action_co2_total) {
-      // Laden Sie die Daten für den CO2-Gesamtlayer
+      getData(URL_BASE + CO2_REQUEST);
       return true;
     } else if (id == R.id.action_co2_per_capita) {
-      // Laden Sie die Daten für den CO2-pro-Kopf-Layer
+      getData(URL_BASE + CO2_PER_CAP_REQUEST);
       return true;
     } else if (id == R.id.action_energy_mix) {
-      // Laden Sie die Daten für den Energiemix-Layer
+      getData(URL_BASE + ENERGY_REQUEST);
       return true;
     } else if (id == R.id.action_electricity_mix) {
-      // Laden Sie die Daten für den Elektrizitätsmix-Layer
+      getData(URL_BASE + ELECTRICITY_REQUEST);
       return true;
     }
 
     return super.onOptionsItemSelected(item);
   }
 
-  public void getData() {
-    String url = "http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3Aworld_co2_emissions&maxFeatures=1000000&outputFormat=application%2Fjson";
+  public void getData(String url) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
+        Log.d("SERVER:", url);
         String response = performApiRequest(url);
         if (response != null) {
           runOnUiThread(new Runnable() {
             @Override
             public void run() {
-              Log.d("Tag:", "CONNECTED");
+              Log.d("SERVER:", "CONNECTED");
               try {
                 handleCO2JSONResponse("2021", response, map);
               } catch (JSONException e) {
