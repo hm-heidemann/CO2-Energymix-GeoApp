@@ -48,10 +48,10 @@ public class drawPolygons {
             JSONArray coordinates = geometry.getJSONArray("coordinates");
 
             // Find the corresponding co2Value for the given year
-            String co2Value = "N/A";
+            int co2Value = 0;
             for (int j = 0; j < yearValues.length(); j++) {
               if (yearValues.getString(j).equals(year)) {
-                co2Value = co2Values.getString(j);
+                co2Value = co2Values.getInt(j);
                 break;
               }
             }
@@ -77,17 +77,20 @@ public class drawPolygons {
                 geoPointsList.add(geoPoints);
               }
 
-              final String co2ValueFinal = co2Value;
+              final int color;
+              int step = co2Value / 100000000;
+              if (step > 10) step = 10;
+              int green = 255 - (step * 26);
+              color = Color.argb(128, 255, green, 0);
 
               runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                   for (List<GeoPoint> geoPoints : geoPointsList) {
                     Polygon polygon = new Polygon();
-                    polygon.getFillPaint().setColor(Color.argb(128, 255, 0, 0));
+                    polygon.getFillPaint().setColor(color);
                     polygon.setPoints(geoPoints);
                     polygon.setTitle(name_de);
-                    Log.d("Tag:", name_de + " wurde verarbeitet\n" + "Koordinaten: " + geoPoints.toString());
 
                     map.getOverlayManager().add(polygon);
                   }
