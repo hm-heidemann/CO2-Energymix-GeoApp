@@ -139,26 +139,6 @@ public class MainActivity extends AppCompatActivity {
     LinearLayout legend = findViewById(R.id.legend);
     legend.removeAllViews();
 
-    String title;
-    switch (dataType) {
-      case CO2_TOTAL:
-        title = "CO2 gesamt";
-        break;
-      case CO2_PER_CAPITA:
-        title = "CO2 pro Kopf";
-        break;
-      case ENERGY_MIX:
-        title = "Energiemix";
-        break;
-      case ELECTRICITY_MIX:
-        title = "Elektrizitätsmix";
-        break;
-      default:
-        title = "";
-    }
-    TextView titleView = findViewById(R.id.title);
-    titleView.setText(title);
-
     for (int i = 0; i < colors.length; i++) {
       View legendItem = getLayoutInflater().inflate(R.layout.legend_item, null);
       legendItem.findViewById(R.id.legend_color).setBackgroundColor(colors[i]);
