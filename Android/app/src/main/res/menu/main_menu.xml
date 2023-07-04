@@ -11,5 +11,5 @@
         android:title="Energiemix"/>
     <item
         android:id="@+id/action_electricity_mix"
-        android:title="Electrizitätsmix"/>
+        android:title="Elektrizitätsmix"/>
 </menu>
