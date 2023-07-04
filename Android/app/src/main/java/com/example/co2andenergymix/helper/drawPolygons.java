@@ -1,9 +1,9 @@
 package com.example.co2andenergymix.helper;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
-import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -11,14 +11,15 @@ import org.json.JSONObject;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polygon;
-import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class drawPolygons {
 
-  private static final int[] COLORS = {
+  private static final int[] CO2_COLORS = {
       Color.parseColor("#fff7ec"),
       Color.parseColor("#feeacc"),
       Color.parseColor("#fdd8a7"),
@@ -29,6 +30,11 @@ public class drawPolygons {
       Color.parseColor("#cf2518"),
       Color.parseColor("#ad0000"),
       Color.parseColor("#7f0000"),
+      Color.GRAY
+  };
+
+  private static final int[] ENERGY_COLORS = {
+      Color.WHITE,
       Color.GRAY
   };
 
@@ -117,7 +123,7 @@ public class drawPolygons {
               } else {
                 idx = 0;
               }
-              color = COLORS[idx];
+              color = CO2_COLORS[idx];
 
               runOnUiThread(new Runnable() {
                 @Override
@@ -218,7 +224,7 @@ public class drawPolygons {
               } else {
                 idx = 0;
               }
-              color = COLORS[idx];
+              color = CO2_COLORS[idx];
 
               runOnUiThread(new Runnable() {
                 @Override
@@ -228,6 +234,216 @@ public class drawPolygons {
                     polygon.getFillPaint().setColor(color);
                     polygon.setPoints(geoPoints);
                     polygon.setTitle(name_de);
+
+                    map.getOverlayManager().add(polygon);
+                  }
+
+                  map.invalidate();
+                }
+              });
+            }
+          }
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+      }
+    }).start();
+  }
+
+  public static void handleEnergyShareJSONResponse(String year, String response, MapView map) throws JSONException {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          map.getOverlayManager().clear();
+          JSONObject jsonObject = new JSONObject(response);
+          JSONArray features = jsonObject.getJSONArray("features");
+          for (int i = 0; i < features.length(); i++) {
+            JSONObject feature = features.getJSONObject(i);
+            JSONObject geometry = feature.getJSONObject("geometry");
+            JSONObject properties = feature.getJSONObject("properties");
+            String name_de = properties.getString("name_de");
+
+            String type = geometry.getString("type");
+            JSONArray coordinates = geometry.getJSONArray("coordinates");
+
+            Map<String, Double> energyShares = new HashMap<>();
+            String[] energyTypes = {"coal", "gas", "oil", "nuclear", "hydro", "solar", "wind"};
+            for (String energyType : energyTypes) {
+              if (!properties.isNull("year_" + energyType.substring(0, 1)) && !properties.isNull(energyType)) {
+                JSONArray energyYears = new JSONArray(properties.getString("year_" + energyType.substring(0, 1)));
+                JSONArray energyValues = new JSONArray(properties.getString(energyType));
+
+                for (int j = 0; j < energyYears.length(); j++) {
+                  if (energyYears.getString(j).equals(year)) {
+                    energyShares.put(energyType, energyValues.getDouble(j));
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (!name_de.equalsIgnoreCase("Antarktika") && type.equals("MultiPolygon")) {
+              List<List<GeoPoint>> geoPointsList = new ArrayList<>();
+
+              for (int j = 0; j < coordinates.length(); j++) {
+                JSONArray polygonCoordinates = coordinates.getJSONArray(j);
+                List<GeoPoint> geoPoints = new ArrayList<>();
+
+                for (int k = 0; k < polygonCoordinates.length(); k++) {
+                  JSONArray ringCoordinates = polygonCoordinates.getJSONArray(k);
+
+                  for (int m = 0; m < ringCoordinates.length(); m++) {
+                    JSONArray pointCoordinates = ringCoordinates.getJSONArray(m);
+                    double longitude = pointCoordinates.getDouble(0);
+                    double latitude = pointCoordinates.getDouble(1);
+                    geoPoints.add(new GeoPoint(latitude, longitude));
+                  }
+                }
+
+                geoPointsList.add(geoPoints);
+              }
+
+              final int color;
+              // Setzen Sie die Farbe auf Grau, wenn keine Daten vorhanden sind, ansonsten auf die Standardfarbe.
+              if (energyShares.isEmpty()) {
+                color = ENERGY_COLORS[1];
+              } else {
+                color = ENERGY_COLORS[0];
+              }
+
+              runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  for (List<GeoPoint> geoPoints : geoPointsList) {
+                    Polygon polygon = new Polygon();
+                    polygon.getFillPaint().setColor(color);
+                    polygon.setPoints(geoPoints);
+                    polygon.setTitle(name_de);
+
+                    polygon.setOnClickListener(new Polygon.OnClickListener() {
+                      @Override
+                      public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(map.getContext());
+                        dialog.setTitle(name_de);
+                        StringBuilder message = new StringBuilder();
+                        // Anpassen der Nachricht anhand der Verfügbarkeit von Daten.
+                        if (energyShares.isEmpty()) {
+                          message.append("Für dieses Land stehen keine Daten zur Verfügung.");
+                        } else {
+                          for (Map.Entry<String, Double> entry : energyShares.entrySet()) {
+                            message.append(entry.getKey()).append(": ").append(entry.getValue()).append("%\n");
+                          }
+                        }
+                        dialog.setMessage(message.toString());
+                        dialog.show();
+                        return true;
+                      }
+                    });
+
+                    map.getOverlayManager().add(polygon);
+                  }
+
+                  map.invalidate();
+                }
+              });
+            }
+          }
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+      }
+    }).start();
+  }
+
+  public static void handleElectricityShareJSONResponse(String year, String response, MapView map) throws JSONException {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          map.getOverlayManager().clear();
+          JSONObject jsonObject = new JSONObject(response);
+          JSONArray features = jsonObject.getJSONArray("features");
+          for (int i = 0; i < features.length(); i++) {
+            JSONObject feature = features.getJSONObject(i);
+            JSONObject geometry = feature.getJSONObject("geometry");
+            JSONObject properties = feature.getJSONObject("properties");
+            String name_de = properties.getString("name_de");
+
+            String type = geometry.getString("type");
+            JSONArray coordinates = geometry.getJSONArray("coordinates");
+
+            Map<String, Double> energyShares = new HashMap<>();
+            String[] energyTypes = {"coal", "gas", "nuclear", "hydro", "solar", "wind"};
+            for (String energyType : energyTypes) {
+              if (!properties.isNull("year_" + energyType.substring(0, 1)) && !properties.isNull(energyType)) {
+                JSONArray energyYears = new JSONArray(properties.getString("year_" + energyType.substring(0, 1)));
+                JSONArray energyValues = new JSONArray(properties.getString(energyType));
+
+                for (int j = 0; j < energyYears.length(); j++) {
+                  if (energyYears.getString(j).equals(year)) {
+                    energyShares.put(energyType, energyValues.getDouble(j));
+                    break;
+                  }
+                }
+              }
+            }
+
+            if (!name_de.equalsIgnoreCase("Antarktika") && type.equals("MultiPolygon")) {
+              List<List<GeoPoint>> geoPointsList = new ArrayList<>();
+
+              for (int j = 0; j < coordinates.length(); j++) {
+                JSONArray polygonCoordinates = coordinates.getJSONArray(j);
+                List<GeoPoint> geoPoints = new ArrayList<>();
+
+                for (int k = 0; k < polygonCoordinates.length(); k++) {
+                  JSONArray ringCoordinates = polygonCoordinates.getJSONArray(k);
+
+                  for (int m = 0; m < ringCoordinates.length(); m++) {
+                    JSONArray pointCoordinates = ringCoordinates.getJSONArray(m);
+                    double longitude = pointCoordinates.getDouble(0);
+                    double latitude = pointCoordinates.getDouble(1);
+                    geoPoints.add(new GeoPoint(latitude, longitude));
+                  }
+                }
+
+                geoPointsList.add(geoPoints);
+              }
+
+              final int color;
+              if (energyShares.isEmpty()) {
+                color = ENERGY_COLORS[1];
+              } else {
+                color = ENERGY_COLORS[0];
+              }
+
+              runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                  for (List<GeoPoint> geoPoints : geoPointsList) {
+                    Polygon polygon = new Polygon();
+                    polygon.getFillPaint().setColor(color);
+                    polygon.setPoints(geoPoints);
+                    polygon.setTitle(name_de);
+
+                    polygon.setOnClickListener(new Polygon.OnClickListener() {
+                      @Override
+                      public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
+                        AlertDialog.Builder dialog = new AlertDialog.Builder(map.getContext());
+                        dialog.setTitle(name_de);
+                        StringBuilder message = new StringBuilder();
+                        if (energyShares.isEmpty()) {
+                          message.append("Für dieses Land stehen keine Daten zur Verfügung.");
+                        } else {
+                          for (Map.Entry<String, Double> entry : energyShares.entrySet()) {
+                            message.append(entry.getKey()).append(": ").append(entry.getValue()).append("%\n");
+                          }
+                        }
+                        dialog.setMessage(message.toString());
+                        dialog.show();
+                        return true;
+                      }
+                    });
 
                     map.getOverlayManager().add(polygon);
                   }

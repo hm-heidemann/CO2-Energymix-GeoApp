@@ -2,6 +2,8 @@ package com.example.co2andenergymix;
 
 import static com.example.co2andenergymix.helper.drawPolygons.handleCO2JSONResponse;
 import static com.example.co2andenergymix.helper.drawPolygons.handleCO2PerCapitaJSONResponse;
+import static com.example.co2andenergymix.helper.drawPolygons.handleElectricityShareJSONResponse;
+import static com.example.co2andenergymix.helper.drawPolygons.handleEnergyShareJSONResponse;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -108,10 +110,10 @@ public class MainActivity extends AppCompatActivity {
                     handleCO2PerCapitaJSONResponse("2021", response, map);
                     break;
                   case ENERGY_MIX:
-                    // call handleEnergyMixJSONResponse function
+                    handleEnergyShareJSONResponse("2021", response, map);
                     break;
                   case ELECTRICITY_MIX:
-                    // call handleElectricityMixJSONResponse function
+                    handleElectricityShareJSONResponse("2022", response, map);
                     break;
                 }
               } catch (JSONException e) {
