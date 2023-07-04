@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CO2-Ausstoß</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Logo_Hochschule_Muenchen.jpg">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        html, body {
+            height: 100%;
+        }
+        
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 65%;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-light tabs">
+    <a class="navbar-brand" style="font-size: 23px;" href="index.html">CO2 Emissionen und Energiemix</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav"
+            aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="co2.html">CO2-Ausstoß</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="energy.html">Energiemix</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="electricity.html">Elektrizitätsmix</a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12 text-center">
+            <h2>Prototyphafte WebApp zur Abfrage und Geovisualisierung von Zeitreihen zum Thema CO2-Ausstoß und Einsatz
+                von fossilen und erneuerbaren Energien auf Länderebene</h2>
+            <p>Hochschule München - Hochschule für angewandte Wissenschaften<br />
+                Fakultät für Geoinformation<br />
+                Karlstraße 6<br />
+                80333 München
+            </p>
+            <p>
+                Entwickelt von Nicolaj Heidemann<br />
+                Betreut durch Prof. Dr. Oster und Prof. Dr. Hoegner
+            </p>
+            <p>
+                Quelle: <a href="https://ourworldindata.org">https://ourworldindata.org</a> <br />
+                Stand Juli 2023
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="js/co2.js"></script>
+</body>
+</html>
