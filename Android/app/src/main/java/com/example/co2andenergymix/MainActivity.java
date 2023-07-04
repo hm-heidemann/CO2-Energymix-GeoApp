@@ -1,9 +1,9 @@
 package com.example.co2andenergymix;
 
-import static com.example.co2andenergymix.helper.drawPolygons.handleCO2JSONResponse;
-import static com.example.co2andenergymix.helper.drawPolygons.handleCO2PerCapitaJSONResponse;
-import static com.example.co2andenergymix.helper.drawPolygons.handleElectricityShareJSONResponse;
-import static com.example.co2andenergymix.helper.drawPolygons.handleEnergyShareJSONResponse;
+import static com.example.co2andenergymix.helper.AddLayer.handleCO2JSONResponse;
+import static com.example.co2andenergymix.helper.AddLayer.handleCO2PerCapitaJSONResponse;
+import static com.example.co2andenergymix.helper.AddLayer.handleElectricityShareJSONResponse;
+import static com.example.co2andenergymix.helper.AddLayer.handleEnergyShareJSONResponse;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -58,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
       Color.parseColor("#cf2518"),
       Color.parseColor("#ad0000"),
       Color.parseColor("#7f0000"),
+      Color.GRAY
+  };
+
+  private static final int[] ENERGY_COLORS = {
+      Color.BLUE,
       Color.GRAY
   };
 
@@ -144,18 +149,32 @@ public class MainActivity extends AppCompatActivity {
       legendItem.findViewById(R.id.legend_color).setBackgroundColor(colors[i]);
       TextView legendLabel = legendItem.findViewById(R.id.legend_label);
 
-      if (colors[i] == Color.GRAY) {
-        legendLabel.setText("Keine Daten");
-      } else if (i == 0) {
-        legendLabel.setText("<" + formatNumber(thresholds[0]));
-      } else if (i == colors.length - 2) {
-        legendLabel.setText(formatNumber(thresholds[i - 1]) + "+");
-      } else if (i == colors.length - 1) {
-        continue;
-      } else {
-        legendLabel.setText(formatNumber(thresholds[i - 1]) + " - " + formatNumber(thresholds[i]));
+      switch(dataType) {
+        case CO2_TOTAL:
+        case CO2_PER_CAPITA:
+          if (colors[i] == Color.GRAY) {
+            legendLabel.setText(" Keine Daten");
+          } else if (i == 0) {
+            legendLabel.setText(" <" + formatNumber(thresholds[0]));
+          } else if (i == colors.length - 2) {
+            legendLabel.setText(" " + formatNumber(thresholds[i - 1]) + "+");
+          } else if (i == colors.length - 1) {
+            continue;
+          } else {
+            legendLabel.setText(" " + formatNumber(thresholds[i - 1]) + " - " + formatNumber(thresholds[i]));
+          }
+          break;
+        case ENERGY_MIX:
+        case ELECTRICITY_MIX:
+          if (colors[i] == Color.GRAY) {
+            legendLabel.setText(" Keine Daten");
+          } else {
+            legendLabel.setText(" Daten vorhanden");
+          }
+          break;
+        default:
+          break;
       }
-
       legend.addView(legendItem);
     }
   }
@@ -195,11 +214,11 @@ public class MainActivity extends AppCompatActivity {
                     break;
                   case ENERGY_MIX:
                     handleEnergyShareJSONResponse("2021", response, map);
-                    updateLegend(new int[]{}, new long[]{}, DataType.ENERGY_MIX);
+                    updateLegend(ENERGY_COLORS, new long[]{}, DataType.ENERGY_MIX);
                     break;
                   case ELECTRICITY_MIX:
                     handleElectricityShareJSONResponse("2022", response, map);
-                    updateLegend(new int[]{}, new long[]{}, DataType.ELECTRICITY_MIX);
+                    updateLegend(ENERGY_COLORS, new long[]{}, DataType.ELECTRICITY_MIX);
                     break;
                 }
               } catch (JSONException e) {

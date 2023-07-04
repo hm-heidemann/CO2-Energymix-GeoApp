@@ -1,23 +1,28 @@
 package com.example.co2andenergymix.helper;
 
-import android.app.AlertDialog;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polygon;
+import org.osmdroid.views.overlay.infowindow.BasicInfoWindow;
+import org.osmdroid.views.overlay.infowindow.InfoWindow;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class drawPolygons {
+public class AddLayer {
 
   private static final int[] CO2_COLORS = {
       Color.parseColor("#fff7ec"),
@@ -34,9 +39,14 @@ public class drawPolygons {
   };
 
   private static final int[] ENERGY_COLORS = {
-      Color.WHITE,
+      Color.BLUE,
       Color.GRAY
   };
+
+  private static Marker currentMarker;
+  private static InfoWindow currentInfoWindow;
+
+  private static DecimalFormat decimalFormat = new DecimalFormat("#0.00");
 
   public static void runOnUiThread(Runnable action) {
     if (Thread.currentThread() != Looper.getMainLooper().getThread()) {
@@ -125,6 +135,7 @@ public class drawPolygons {
               }
               color = CO2_COLORS[idx];
 
+              long finalCo2Value = co2Value;
               runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -133,6 +144,55 @@ public class drawPolygons {
                     polygon.getFillPaint().setColor(color);
                     polygon.setPoints(geoPoints);
                     polygon.setTitle(name_de);
+
+                    polygon.setOnClickListener(new Polygon.OnClickListener() {
+                      @Override
+                      public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
+                        if (currentMarker != null && currentInfoWindow != null) {
+                          currentMarker.closeInfoWindow();
+                          map.getOverlayManager().remove(currentMarker);
+                          currentMarker = null;
+                          currentInfoWindow = null;
+                        }
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(eventPos);
+                        marker.setIcon(ContextCompat.getDrawable(mapView.getContext(), org.osmdroid.bonuspack.R.drawable.marker_default));
+
+                        BasicInfoWindow infoWindow = new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView);
+                        marker.setInfoWindow(infoWindow);
+                        marker.setInfoWindowAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+                        String name = polygon.getTitle();
+                        marker.setTitle(name);
+
+                        StringBuilder markerDescription = new StringBuilder();
+
+                        if (finalCo2Value == -1) {
+                          markerDescription.append("Keine Daten für das Jahr ").append(year).append(" vorhanden.");
+                        } else {
+                          double roundedCO2Value = Math.round(finalCo2Value / 1_000_000.0);
+                          String formattedCO2Value = decimalFormat.format(roundedCO2Value);
+                          markerDescription.append("Der CO2 Ausstoß im Jahr ").append(year).append(" betrug ").append(formattedCO2Value).append(" Mio Tonnen.");
+                        }
+
+                        marker.setSubDescription(markerDescription.toString());
+                        marker.showInfoWindow();
+                        marker.setOnMarkerClickListener(new Marker.OnMarkerClickListener() {
+                          @Override
+                          public boolean onMarkerClick(Marker marker, MapView mapView) {
+                            if (marker.isDisplayed()) {
+                              marker.closeInfoWindow();
+                            }
+                            return true;
+                          }
+                        });
+
+                        currentMarker = marker;
+                        currentInfoWindow = infoWindow;
+                        return true;
+                      }
+                    });
 
                     map.getOverlayManager().add(polygon);
                   }
@@ -148,6 +208,7 @@ public class drawPolygons {
       }
     }).start();
   }
+
 
   public static void handleCO2PerCapitaJSONResponse(String year, String response, MapView map) throws JSONException {
     new Thread(new Runnable() {
@@ -226,6 +287,7 @@ public class drawPolygons {
               }
               color = CO2_COLORS[idx];
 
+              double finalCo2PerCapitaValue = co2PerCapitaValue;
               runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -234,6 +296,54 @@ public class drawPolygons {
                     polygon.getFillPaint().setColor(color);
                     polygon.setPoints(geoPoints);
                     polygon.setTitle(name_de);
+
+                    polygon.setOnClickListener(new Polygon.OnClickListener() {
+                      @Override
+                      public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
+                        if (currentMarker != null && currentInfoWindow != null) {
+                          currentMarker.closeInfoWindow();
+                          map.getOverlayManager().remove(currentMarker);
+                          currentMarker = null;
+                          currentInfoWindow = null;
+                        }
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(eventPos);
+                        marker.setIcon(ContextCompat.getDrawable(mapView.getContext(), org.osmdroid.bonuspack.R.drawable.marker_default));
+
+                        BasicInfoWindow infoWindow = new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView);
+                        marker.setInfoWindow(infoWindow);
+                        marker.setInfoWindowAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+                        String name = polygon.getTitle();
+                        marker.setTitle(name);
+
+                        StringBuilder markerDescription = new StringBuilder();
+
+                        if (finalCo2PerCapitaValue == -1) {
+                          markerDescription.append("Keine Daten für das Jahr ").append(year).append(" vorhanden.");
+                        } else {
+                          double formattedCO2PerCapValue = Double.parseDouble(decimalFormat.format(finalCo2PerCapitaValue));
+                          markerDescription.append("Der CO2 Ausstoß pro Kopf im Jahr ").append(year).append(" betrug ").append(formattedCO2PerCapValue).append(" Tonnen.");
+                        }
+
+                        marker.setSubDescription(markerDescription.toString());
+                        marker.showInfoWindow();
+                        marker.setOnMarkerClickListener(new Marker.OnMarkerClickListener() {
+                          @Override
+                          public boolean onMarkerClick(Marker marker, MapView mapView) {
+                            if (marker.isDisplayed()) {
+                              marker.closeInfoWindow();
+                            }
+                            return true;
+                          }
+                        });
+
+                        currentMarker = marker;
+                        currentInfoWindow = infoWindow;
+                        return true;
+                      }
+                    });
 
                     map.getOverlayManager().add(polygon);
                   }
@@ -305,7 +415,6 @@ public class drawPolygons {
               }
 
               final int color;
-              // Setzen Sie die Farbe auf Grau, wenn keine Daten vorhanden sind, ansonsten auf die Standardfarbe.
               if (energyShares.isEmpty()) {
                 color = ENERGY_COLORS[1];
               } else {
@@ -324,19 +433,53 @@ public class drawPolygons {
                     polygon.setOnClickListener(new Polygon.OnClickListener() {
                       @Override
                       public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
-                        AlertDialog.Builder dialog = new AlertDialog.Builder(map.getContext());
-                        dialog.setTitle(name_de);
-                        StringBuilder message = new StringBuilder();
-                        // Anpassen der Nachricht anhand der Verfügbarkeit von Daten.
+                        if (currentMarker != null && currentInfoWindow != null) {
+                          currentMarker.closeInfoWindow();
+                          map.getOverlayManager().remove(currentMarker);
+                          currentMarker = null;
+                          currentInfoWindow = null;
+                        }
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(eventPos);
+                        marker.setIcon(ContextCompat.getDrawable(mapView.getContext(), org.osmdroid.bonuspack.R.drawable.marker_default));
+
+                        BasicInfoWindow infoWindow = new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView);
+                        marker.setInfoWindow(infoWindow);
+                        marker.setInfoWindowAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+                        String name = polygon.getTitle();
+                        marker.setTitle(name);
+
+                        StringBuilder markerDescription = new StringBuilder();
+                        markerDescription.append("<b>Energiemix im Jahr " + year + "</b><br/>");
+
                         if (energyShares.isEmpty()) {
-                          message.append("Für dieses Land stehen keine Daten zur Verfügung.");
+                          markerDescription.append("Für dieses Land stehen keine Daten zur Verfügung.");
                         } else {
                           for (Map.Entry<String, Double> entry : energyShares.entrySet()) {
-                            message.append(entry.getKey()).append(": ").append(entry.getValue()).append("%\n");
+                            String keyString = entry.getKey();
+                            char firstLetter = Character.toUpperCase(keyString.charAt(0));
+                            String modifiedKey = firstLetter + keyString.substring(1);
+                            double val = Double.parseDouble(decimalFormat.format(entry.getValue()));
+                            markerDescription.append(modifiedKey).append(": ").append(val).append("%<br/>");
                           }
                         }
-                        dialog.setMessage(message.toString());
-                        dialog.show();
+
+                        marker.setSubDescription(markerDescription.toString());
+                        marker.showInfoWindow();
+                        marker.setOnMarkerClickListener(new Marker.OnMarkerClickListener() {
+                          @Override
+                          public boolean onMarkerClick(Marker marker, MapView mapView) {
+                            if (marker.isDisplayed()) {
+                              marker.closeInfoWindow();
+                            }
+                            return true;
+                          }
+                        });
+
+                        currentMarker = marker;
+                        currentInfoWindow = infoWindow;
                         return true;
                       }
                     });
@@ -429,18 +572,53 @@ public class drawPolygons {
                     polygon.setOnClickListener(new Polygon.OnClickListener() {
                       @Override
                       public boolean onClick(Polygon polygon, MapView mapView, GeoPoint eventPos) {
-                        AlertDialog.Builder dialog = new AlertDialog.Builder(map.getContext());
-                        dialog.setTitle(name_de);
-                        StringBuilder message = new StringBuilder();
+                        if (currentMarker != null && currentInfoWindow != null) {
+                          currentMarker.closeInfoWindow();
+                          map.getOverlayManager().remove(currentMarker);
+                          currentMarker = null;
+                          currentInfoWindow = null;
+                        }
+
+                        Marker marker = new Marker(mapView);
+                        marker.setPosition(eventPos);
+                        marker.setIcon(ContextCompat.getDrawable(mapView.getContext(), org.osmdroid.bonuspack.R.drawable.marker_default));
+
+                        BasicInfoWindow infoWindow = new BasicInfoWindow(org.osmdroid.bonuspack.R.layout.bonuspack_bubble, mapView);
+                        marker.setInfoWindow(infoWindow);
+                        marker.setInfoWindowAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+
+                        String name = polygon.getTitle();
+                        marker.setTitle(name);
+
+                        StringBuilder markerDescription = new StringBuilder();
+                        markerDescription.append("<b>Energiemix im Jahr " + year + "</b><br/>");
+
                         if (energyShares.isEmpty()) {
-                          message.append("Für dieses Land stehen keine Daten zur Verfügung.");
+                          markerDescription.append("Für dieses Land stehen keine Daten zur Verfügung.");
                         } else {
                           for (Map.Entry<String, Double> entry : energyShares.entrySet()) {
-                            message.append(entry.getKey()).append(": ").append(entry.getValue()).append("%\n");
+                            String keyString = entry.getKey();
+                            char firstLetter = Character.toUpperCase(keyString.charAt(0));
+                            String modifiedKey = firstLetter + keyString.substring(1);
+                            double val = Double.parseDouble(decimalFormat.format(entry.getValue()));
+                            markerDescription.append(modifiedKey).append(": ").append(val).append("%<br/>");
                           }
                         }
-                        dialog.setMessage(message.toString());
-                        dialog.show();
+
+                        marker.setSubDescription(markerDescription.toString());
+                        marker.showInfoWindow();
+                        marker.setOnMarkerClickListener(new Marker.OnMarkerClickListener() {
+                          @Override
+                          public boolean onMarkerClick(Marker marker, MapView mapView) {
+                            if (marker.isDisplayed()) {
+                              marker.closeInfoWindow();
+                            }
+                            return true;
+                          }
+                        });
+
+                        currentMarker = marker;
+                        currentInfoWindow = infoWindow;
                         return true;
                       }
                     });
