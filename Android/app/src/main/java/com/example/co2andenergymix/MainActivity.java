@@ -8,6 +8,7 @@ import static com.example.co2andenergymix.helper.drawPolygons.handleEnergyShareJ
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +22,9 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.example.co2andenergymix.enums.DataType;
 
@@ -42,6 +46,47 @@ public class MainActivity extends AppCompatActivity {
   private static final String CO2_PER_CAP_REQUEST = "world_co2_emissions_pc&maxFeatures=1000000&outputFormat=application%2Fjson";
   private static final String ENERGY_REQUEST = "world_energy_share&maxFeatures=1000000&outputFormat=application%2Fjson";
   private static final String ELECTRICITY_REQUEST = "world_electricity_share&maxFeatures=1000000&outputFormat=application%2Fjson";
+
+  private static final int[] CO2_COLORS = {
+      Color.parseColor("#fff7ec"),
+      Color.parseColor("#feeacc"),
+      Color.parseColor("#fdd8a7"),
+      Color.parseColor("#fdc38d"),
+      Color.parseColor("#fca16c"),
+      Color.parseColor("#f67b51"),
+      Color.parseColor("#e7533a"),
+      Color.parseColor("#cf2518"),
+      Color.parseColor("#ad0000"),
+      Color.parseColor("#7f0000"),
+      Color.GRAY
+  };
+
+  private static final long[] CO2_THRESHOLDS = {
+      100_000_000,
+      200_000_000,
+      300_000_000,
+      400_000_000,
+      500_000_000,
+      600_000_000,
+      700_000_000,
+      800_000_000,
+      900_000_000,
+      Long.MAX_VALUE
+  };
+
+  private static final long[] CO2_PER_CAPITA_THRESHOLDS = {
+      2,
+      4,
+      6,
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      Long.MAX_VALUE
+  };
+
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -90,6 +135,63 @@ public class MainActivity extends AppCompatActivity {
     return super.onOptionsItemSelected(item);
   }
 
+  public void updateLegend(int[] colors, long[] thresholds, DataType dataType) {
+    LinearLayout legend = findViewById(R.id.legend);
+    legend.removeAllViews();
+
+    String title;
+    switch (dataType) {
+      case CO2_TOTAL:
+        title = "CO2 gesamt";
+        break;
+      case CO2_PER_CAPITA:
+        title = "CO2 pro Kopf";
+        break;
+      case ENERGY_MIX:
+        title = "Energiemix";
+        break;
+      case ELECTRICITY_MIX:
+        title = "Elektrizitätsmix";
+        break;
+      default:
+        title = "";
+    }
+    TextView titleView = findViewById(R.id.title);
+    titleView.setText(title);
+
+    for (int i = 0; i < colors.length; i++) {
+      View legendItem = getLayoutInflater().inflate(R.layout.legend_item, null);
+      legendItem.findViewById(R.id.legend_color).setBackgroundColor(colors[i]);
+      TextView legendLabel = legendItem.findViewById(R.id.legend_label);
+
+      if (colors[i] == Color.GRAY) {
+        legendLabel.setText("Keine Daten");
+      } else if (i == 0) {
+        legendLabel.setText("<" + formatNumber(thresholds[0]));
+      } else if (i == colors.length - 2) {
+        legendLabel.setText(formatNumber(thresholds[i - 1]) + "+");
+      } else if (i == colors.length - 1) {
+        continue;
+      } else {
+        legendLabel.setText(formatNumber(thresholds[i - 1]) + " - " + formatNumber(thresholds[i]));
+      }
+
+      legend.addView(legendItem);
+    }
+  }
+
+  private String formatNumber(long number) {
+    if (number >= 1_000_000_000) {
+      return number / 1_000_000_000 + "B";
+    } else if (number >= 1_000_000) {
+      return number / 1_000_000 + "M";
+    } else if (number >= 1_000) {
+      return number / 1_000 + "K";
+    } else {
+      return String.valueOf(number);
+    }
+  }
+
   public void getData(String url, DataType dataType) {
     executor.execute(new Runnable() {
       @Override
@@ -105,15 +207,19 @@ public class MainActivity extends AppCompatActivity {
                 switch(dataType) {
                   case CO2_TOTAL:
                     handleCO2JSONResponse("2021", response, map);
+                    updateLegend(CO2_COLORS, CO2_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case CO2_PER_CAPITA:
                     handleCO2PerCapitaJSONResponse("2021", response, map);
+                    updateLegend(CO2_COLORS, CO2_PER_CAPITA_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case ENERGY_MIX:
                     handleEnergyShareJSONResponse("2021", response, map);
+                    updateLegend(new int[]{}, new long[]{}, DataType.ENERGY_MIX);
                     break;
                   case ELECTRICITY_MIX:
                     handleElectricityShareJSONResponse("2022", response, map);
+                    updateLegend(new int[]{}, new long[]{}, DataType.ELECTRICITY_MIX);
                     break;
                 }
               } catch (JSONException e) {
