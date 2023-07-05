@@ -108,6 +108,7 @@ public class AddLayer {
                 geoPointsList.add(geoPoints);
               }
 
+              // Setze Color abhängig vom CO2 Ausstoß
               final int color;
               int idx;
               if (co2Value == -1) {
@@ -260,6 +261,7 @@ public class AddLayer {
                 geoPointsList.add(geoPoints);
               }
 
+              // Setze Color abhängig vom CO2 Ausstoß
               final int color;
               int idx;
               if (co2PerCapitaValue == -1) {

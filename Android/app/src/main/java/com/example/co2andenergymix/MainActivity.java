@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
     yearSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
       int progressValue = 0;
 
+      // Aktualisiere die Jahresanzeige wenn der Slider bewegt wird
       @Override
       public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         progressValue = progress;
@@ -139,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
       public void onStartTrackingTouch(SeekBar seekBar) {
       }
 
+      // Lade den Layer neu wenn der Slider losgelassen wird
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
         String year = String.valueOf(minYear + progressValue);
@@ -174,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
   public boolean onOptionsItemSelected(MenuItem item) {
     int id = item.getItemId();
 
+    // Setze die Jahresanzeige abhängig vom Layer
     if (id == R.id.action_co2_total) {
       minYear = 1750;
       maxYear = 2021;
@@ -200,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
       endYearTextView.setText(String.valueOf(maxYear));
     }
 
+    // Lade Layer abhängig von der Menüauswahl
     if (id == R.id.action_co2_total) {
       getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, "2021");
     } else if (id == R.id.action_co2_per_capita) {
