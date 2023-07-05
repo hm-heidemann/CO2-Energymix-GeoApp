@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
   private TextView startYearTextView;
   private TextView endYearTextView;
+
+  private DataType selectedLayer = DataType.CO2_TOTAL;
   private final Executor executor = Executors.newSingleThreadExecutor();
 
   private static final String URL_BASE = "http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3A";
@@ -140,7 +142,22 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void onStopTrackingTouch(SeekBar seekBar) {
         String year = String.valueOf(minYear + progressValue);
-        // getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, year);
+        switch (selectedLayer) {
+          case CO2_TOTAL:
+            getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, year);
+            break;
+          case CO2_PER_CAPITA:
+            getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA, year);
+            break;
+          case ENERGY_MIX:
+            getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX, year);
+            break;
+          case ELECTRICITY_MIX:
+            getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX, year);
+            break;
+          default:
+            break;
+        }
       }
     });
 
@@ -156,42 +173,41 @@ public class MainActivity extends AppCompatActivity {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     int id = item.getItemId();
-    String selectedYear = "";
-    if (yearSeekBar != null) selectedYear = String.valueOf(minYear + yearSeekBar.getProgress());
 
     if (id == R.id.action_co2_total) {
       minYear = 1750;
       maxYear = 2021;
+      selectedLayer = DataType.CO2_TOTAL;
     } else if (id == R.id.action_co2_per_capita) {
       minYear = 1750;
       maxYear = 2021;
+      selectedLayer = DataType.CO2_PER_CAPITA;
     } else if (id == R.id.action_energy_mix) {
       minYear = 1965;
       maxYear = 2021;
+      selectedLayer = DataType.ENERGY_MIX;
     } else if (id == R.id.action_electricity_mix) {
       minYear = 1985;
       maxYear = 2022;
-    } else {
-      return super.onOptionsItemSelected(item);
+      selectedLayer = DataType.ELECTRICITY_MIX;
     }
 
     yearSeekBar.setMax(maxYear - minYear);
     yearSeekBar.setProgress(yearSeekBar.getMax());
 
-    // Aktualisiert die Min- und Max-Jahresanzeigen
     if (startYearTextView != null && endYearTextView != null) {
       startYearTextView.setText(String.valueOf(minYear));
       endYearTextView.setText(String.valueOf(maxYear));
     }
 
     if (id == R.id.action_co2_total) {
-      getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, selectedYear);
+      getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, "2021");
     } else if (id == R.id.action_co2_per_capita) {
-      getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA, selectedYear);
+      getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA, "2021");
     } else if (id == R.id.action_energy_mix) {
-      getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX, selectedYear);
+      getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX, "2021");
     } else if (id == R.id.action_electricity_mix) {
-      getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX, selectedYear);
+      getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX, "2022");
     }
 
     return true;
@@ -262,19 +278,19 @@ public class MainActivity extends AppCompatActivity {
               try {
                 switch(dataType) {
                   case CO2_TOTAL:
-                    handleCO2JSONResponse("2021", response, map);
+                    handleCO2JSONResponse(year, response, map);
                     updateLegend(CO2_COLORS, CO2_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case CO2_PER_CAPITA:
-                    handleCO2PerCapitaJSONResponse("2021", response, map);
+                    handleCO2PerCapitaJSONResponse(year, response, map);
                     updateLegend(CO2_COLORS, CO2_PER_CAPITA_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case ENERGY_MIX:
-                    handleEnergyShareJSONResponse("2021", response, map);
+                    handleEnergyShareJSONResponse(year, response, map);
                     updateLegend(ENERGY_COLORS, new long[]{}, DataType.ENERGY_MIX);
                     break;
                   case ELECTRICITY_MIX:
-                    handleElectricityShareJSONResponse("2022", response, map);
+                    handleElectricityShareJSONResponse(year, response, map);
                     updateLegend(ENERGY_COLORS, new long[]{}, DataType.ELECTRICITY_MIX);
                     break;
                 }

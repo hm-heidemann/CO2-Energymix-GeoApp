@@ -591,7 +591,7 @@ public class AddLayer {
                         marker.setTitle(name);
 
                         StringBuilder markerDescription = new StringBuilder();
-                        markerDescription.append("<b>Energiemix im Jahr " + year + "</b><br/>");
+                        markerDescription.append("<b>Elektrizitätsmix im Jahr " + year + "</b><br/>");
 
                         if (energyShares.isEmpty()) {
                           markerDescription.append("Für dieses Land stehen keine Daten zur Verfügung.");
