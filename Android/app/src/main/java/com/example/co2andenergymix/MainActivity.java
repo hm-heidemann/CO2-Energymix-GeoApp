@@ -1,9 +1,9 @@
 package com.example.co2andenergymix;
 
-import static com.example.co2andenergymix.helper.AddLayer.handleCO2JSONResponse;
-import static com.example.co2andenergymix.helper.AddLayer.handleCO2PerCapitaJSONResponse;
-import static com.example.co2andenergymix.helper.AddLayer.handleElectricityShareJSONResponse;
-import static com.example.co2andenergymix.helper.AddLayer.handleEnergyShareJSONResponse;
+import static com.example.co2andenergymix.helper.AddLayer.addCO2TotalLayer;
+import static com.example.co2andenergymix.helper.AddLayer.addCO2PerCapLayer;
+import static com.example.co2andenergymix.helper.AddLayer.addElectricityLayer;
+import static com.example.co2andenergymix.helper.AddLayer.addEnergyLayer;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -278,19 +278,19 @@ public class MainActivity extends AppCompatActivity {
               try {
                 switch(dataType) {
                   case CO2_TOTAL:
-                    handleCO2JSONResponse(year, response, map);
+                    addCO2TotalLayer(year, response, map);
                     updateLegend(CO2_COLORS, CO2_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case CO2_PER_CAPITA:
-                    handleCO2PerCapitaJSONResponse(year, response, map);
+                    addCO2PerCapLayer(year, response, map);
                     updateLegend(CO2_COLORS, CO2_PER_CAPITA_THRESHOLDS, DataType.CO2_TOTAL);
                     break;
                   case ENERGY_MIX:
-                    handleEnergyShareJSONResponse(year, response, map);
+                    addEnergyLayer(year, response, map);
                     updateLegend(ENERGY_COLORS, new long[]{}, DataType.ENERGY_MIX);
                     break;
                   case ELECTRICITY_MIX:
-                    handleElectricityShareJSONResponse(year, response, map);
+                    addElectricityLayer(year, response, map);
                     updateLegend(ENERGY_COLORS, new long[]{}, DataType.ELECTRICITY_MIX);
                     break;
                 }

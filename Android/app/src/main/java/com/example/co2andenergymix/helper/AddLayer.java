@@ -57,7 +57,7 @@ public class AddLayer {
     }
   }
 
-  public static void handleCO2JSONResponse(String year, String response, MapView map) throws JSONException {
+  public static void addCO2TotalLayer(String year, String response, MapView map) throws JSONException {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -210,7 +210,7 @@ public class AddLayer {
   }
 
 
-  public static void handleCO2PerCapitaJSONResponse(String year, String response, MapView map) throws JSONException {
+  public static void addCO2PerCapLayer(String year, String response, MapView map) throws JSONException {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -360,7 +360,7 @@ public class AddLayer {
     }).start();
   }
 
-  public static void handleEnergyShareJSONResponse(String year, String response, MapView map) throws JSONException {
+  public static void addEnergyLayer(String year, String response, MapView map) throws JSONException {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -499,7 +499,7 @@ public class AddLayer {
     }).start();
   }
 
-  public static void handleElectricityShareJSONResponse(String year, String response, MapView map) throws JSONException {
+  public static void addElectricityLayer(String year, String response, MapView map) throws JSONException {
     new Thread(new Runnable() {
       @Override
       public void run() {
