@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.co2andenergymix.enums.DataType;
@@ -39,6 +40,13 @@ import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
   private MapView map;
+  private SeekBar yearSeekBar;
+
+  private int minYear = 1750;
+  private int maxYear = 2021;
+
+  private TextView startYearTextView;
+  private TextView endYearTextView;
   private final Executor executor = Executors.newSingleThreadExecutor();
 
   private static final String URL_BASE = "http://10.152.57.134:8080/geoserver/heidemann/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=heidemann%3A";
@@ -110,7 +118,33 @@ public class MainActivity extends AppCompatActivity {
     GeoPoint startPoint = new GeoPoint(0, 0);
     mapController.setCenter(startPoint);
 
-    getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL);
+    TextView currentYearTextView = (TextView) findViewById(R.id.currentYear);
+    startYearTextView = (TextView) findViewById(R.id.startYear);
+    endYearTextView = (TextView) findViewById(R.id.endYear);
+    yearSeekBar = (SeekBar) findViewById(R.id.yearSeekBar);
+
+    yearSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+      int progressValue = 0;
+
+      @Override
+      public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        progressValue = progress;
+
+        currentYearTextView.setText("Aktuelles Jahr: " + (minYear + progress));
+      }
+
+      @Override
+      public void onStartTrackingTouch(SeekBar seekBar) {
+      }
+
+      @Override
+      public void onStopTrackingTouch(SeekBar seekBar) {
+        String year = String.valueOf(minYear + progressValue);
+        // getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, year);
+      }
+    });
+
+    getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, "2021");
   }
 
   @Override
@@ -122,22 +156,45 @@ public class MainActivity extends AppCompatActivity {
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     int id = item.getItemId();
+    String selectedYear = "";
+    if (yearSeekBar != null) selectedYear = String.valueOf(minYear + yearSeekBar.getProgress());
 
     if (id == R.id.action_co2_total) {
-      getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL);
-      return true;
+      minYear = 1750;
+      maxYear = 2021;
     } else if (id == R.id.action_co2_per_capita) {
-      getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA);
-      return true;
+      minYear = 1750;
+      maxYear = 2021;
     } else if (id == R.id.action_energy_mix) {
-      getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX);
-      return true;
+      minYear = 1965;
+      maxYear = 2021;
     } else if (id == R.id.action_electricity_mix) {
-      getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX);
-      return true;
+      minYear = 1985;
+      maxYear = 2022;
+    } else {
+      return super.onOptionsItemSelected(item);
     }
 
-    return super.onOptionsItemSelected(item);
+    yearSeekBar.setMax(maxYear - minYear);
+    yearSeekBar.setProgress(yearSeekBar.getMax());
+
+    // Aktualisiert die Min- und Max-Jahresanzeigen
+    if (startYearTextView != null && endYearTextView != null) {
+      startYearTextView.setText(String.valueOf(minYear));
+      endYearTextView.setText(String.valueOf(maxYear));
+    }
+
+    if (id == R.id.action_co2_total) {
+      getData(URL_BASE + CO2_REQUEST, DataType.CO2_TOTAL, selectedYear);
+    } else if (id == R.id.action_co2_per_capita) {
+      getData(URL_BASE + CO2_PER_CAP_REQUEST, DataType.CO2_PER_CAPITA, selectedYear);
+    } else if (id == R.id.action_energy_mix) {
+      getData(URL_BASE + ENERGY_REQUEST, DataType.ENERGY_MIX, selectedYear);
+    } else if (id == R.id.action_electricity_mix) {
+      getData(URL_BASE + ELECTRICITY_REQUEST, DataType.ELECTRICITY_MIX, selectedYear);
+    }
+
+    return true;
   }
 
   public void updateLegend(int[] colors, long[] thresholds, DataType dataType) {
@@ -191,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  public void getData(String url, DataType dataType) {
+  public void getData(String url, DataType dataType, String year) {
     executor.execute(new Runnable() {
       @Override
       public void run() {
