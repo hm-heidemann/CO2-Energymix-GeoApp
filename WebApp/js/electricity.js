@@ -500,6 +500,13 @@ legend.onAdd = function (map) {
 
 legend.addTo(map);
 
+L.control.scale({
+    maxWidth: 100,
+    metric: true, 
+    imperial: false,
+    updateWhenIdle: false 
+}).addTo(map);
+
 function getSimpleLegend() {
     var result = '';
     var simpleLabels = ['Erneuerbar', 'Fossil'];

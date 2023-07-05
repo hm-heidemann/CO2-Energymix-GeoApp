@@ -374,6 +374,13 @@ legend.onAdd = function (map) {
 
 legend.addTo(map);
 
+L.control.scale({
+    maxWidth: 100,
+    metric: true, 
+    imperial: false,
+    updateWhenIdle: false 
+}).addTo(map);
+
 function getCo2Legend() {
     var result = '<i style="background:gray"></i> Keine Daten<br>';
     for (var i = 0; i < numb_classes; i++) {
