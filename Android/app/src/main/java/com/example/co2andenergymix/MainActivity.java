@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
       @Override
       public void run() {
         Log.d("SERVER:", url);
-        String response = performApiRequest(url);
+        String response = callGeoserverApi(url);
         if (response != null) {
           runOnUiThread(new Runnable() {
             @Override
@@ -304,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
     });
   }
 
-  private String performApiRequest(String urlString) {
+  private String callGeoserverApi(String urlString) {
     try {
       URL url = new URL(urlString);
       HttpURLConnection connection = (HttpURLConnection) url.openConnection();
